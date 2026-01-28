@@ -1,0 +1,61 @@
+# Laravel specific
+bootstrap/cache/*
+storage/*.key
+.env
+.env.backup
+.phpunit.result.cache
+homestead.yaml
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+
+# Composer
+/vendor/
+
+# Node
+/node_modules/
+
+# IDEs and editors
+.idea
+.vscode
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Local development
+Homestead.json
+Homestead.yaml
+
+# Laravel 4 specific
+bootstrap/compiled.php
+app/storage/
+
+# Laravel 5 & Lumen specific
+public/storage
+public/hot
+
+# Laravel 5 & Lumen specific with changed public path
+public_html/storage
+public_html/hot
+
+# Laravel 5 & Lumen specific with changed public path
+public_html/public/storage
+public_html/public/hot
+
+# Laravel 5 & Lumen specific for tests
+/storage/*.key
+
+# Laravel 5 & Lumen specific with changed public path
+/public_html/storage/*.key
+
+# Laravel 5 & Lumen specific with changed public path
+/public_html/public/storage/*.key
