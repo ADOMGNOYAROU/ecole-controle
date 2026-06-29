@@ -3,48 +3,48 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\MatiereRequest;
 use App\Models\Matiere;
+use Illuminate\Http\JsonResponse;
 
 class MatiereController extends Controller
 {
-    public function index()
+    public function index(): JsonResponse
     {
-        return response()->json(Matiere::all());
+        $this->authorize('viewAny', Matiere::class);
+
+        return response()->json(Matiere::orderBy('nom')->get());
     }
 
-    public function store(Request $request)
+    public function store(MatiereRequest $request): JsonResponse
     {
-        $matiere = Matiere::create($request->all());
-        return response()->json($matiere, 201);
+        $this->authorize('create', Matiere::class);
+
+        return response()->json(Matiere::create($request->validated()), 201);
     }
 
-    public function show($id)
+    public function show(Matiere $matiere): JsonResponse
     {
-        $matiere = Matiere::find($id);
-        if (!$matiere) {
-            return response()->json(['message' => 'Matière non trouvée'], 404);
-        }
+        $this->authorize('view', $matiere);
+
         return response()->json($matiere);
     }
 
-    public function update(Request $request, $id)
+    public function update(MatiereRequest $request, Matiere $matiere): JsonResponse
     {
-        $matiere = Matiere::find($id);
-        if (!$matiere) {
-            return response()->json(['message' => 'Matière non trouvée'], 404);
-        }
-        $matiere->update($request->all());
+        $this->authorize('update', $matiere);
+
+        $matiere->update($request->validated());
+
         return response()->json($matiere);
     }
 
-    public function destroy($id)
+    public function destroy(Matiere $matiere): JsonResponse
     {
-        $matiere = Matiere::find($id);
-        if (!$matiere) {
-            return response()->json(['message' => 'Matière non trouvée'], 404);
-        }
+        $this->authorize('delete', $matiere);
+
         $matiere->delete();
-        return response()->json(['message' => 'Matière supprimée']);
+
+        return response()->json(null, 204);
     }
 }

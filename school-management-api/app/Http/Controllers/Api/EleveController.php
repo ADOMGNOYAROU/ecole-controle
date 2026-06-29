@@ -3,48 +3,54 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\EleveRequest;
 use App\Models\Eleve;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class EleveController extends Controller
 {
-    public function index()
+    public function index(Request $request): JsonResponse
     {
-        return response()->json(Eleve::with('classe')->get());
+        $this->authorize('viewAny', Eleve::class);
+
+        $eleves = Eleve::with('classe')
+            ->when($request->filled('classe_id'), fn ($q) => $q->where('classe_id', $request->classe_id))
+            ->orderBy('nom')
+            ->get();
+
+        return response()->json($eleves);
     }
 
-    public function store(Request $request)
+    public function store(EleveRequest $request): JsonResponse
     {
-        $eleve = Eleve::create($request->all());
-        return response()->json($eleve, 201);
+        $this->authorize('create', Eleve::class);
+
+        return response()->json(Eleve::create($request->validated()), 201);
     }
 
-    public function show($id)
+    public function show(Eleve $eleve): JsonResponse
     {
-        $eleve = Eleve::with('classe')->find($id);
-        if (!$eleve) {
-            return response()->json(['message' => 'Élève non trouvé'], 404);
-        }
+        $this->authorize('view', $eleve);
+
+        return response()->json($eleve->load('classe', 'tuteurs'));
+    }
+
+    public function update(EleveRequest $request, Eleve $eleve): JsonResponse
+    {
+        $this->authorize('update', $eleve);
+
+        $eleve->update($request->validated());
+
         return response()->json($eleve);
     }
 
-    public function update(Request $request, $id)
+    public function destroy(Eleve $eleve): JsonResponse
     {
-        $eleve = Eleve::find($id);
-        if (!$eleve) {
-            return response()->json(['message' => 'Élève non trouvé'], 404);
-        }
-        $eleve->update($request->all());
-        return response()->json($eleve);
-    }
+        $this->authorize('delete', $eleve);
 
-    public function destroy($id)
-    {
-        $eleve = Eleve::find($id);
-        if (!$eleve) {
-            return response()->json(['message' => 'Élève non trouvé'], 404);
-        }
         $eleve->delete();
-        return response()->json(['message' => 'Élève supprimé']);
+
+        return response()->json(null, 204);
     }
 }

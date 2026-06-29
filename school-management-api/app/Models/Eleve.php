@@ -2,88 +2,146 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Eleve extends Model
 {
-    use HasFactory;
-
-    protected $table = 'eleves';
+    use HasFactory, BelongsToEcole;
 
     protected $fillable = [
+        'ecole_id',
         'user_id',
+        'matricule',
         'nom',
         'prenom',
-        'matricule',
+        'sexe',
         'date_naissance',
         'lieu_naissance',
-        'sexe',
-        'classe_id',
-        'parent_contact',
         'adresse',
+        'telephone',
+        'email',
+        'photo',
+        'classe_id',
         'statut',
+        'date_inscription',
+        'contact_urgence_nom',
+        'contact_urgence_telephone',
     ];
 
     protected $casts = [
         'date_naissance' => 'date',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'date_inscription' => 'date',
     ];
 
-    /**
-     * RELATION : Un élève appartient à une classe
-     */
-    public function classe()
-    {
-        return $this->belongsTo(Classe::class);
-    }
+    public const STATUT_ACTIF = 'actif';
+    public const STATUT_INACTIF = 'inactif';
+    public const STATUT_DIPLOME = 'diplome';
+    public const STATUT_EXCLU = 'exclu';
 
-    /**
-     * RELATION : Un élève peut être lié à un user
-     */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * RELATION : Un élève peut avoir plusieurs parents
-     */
-    public function parents()
+    public function classe(): BelongsTo
     {
-        return $this->belongsToMany(ParentModel::class, 'eleve_parent', 'eleve_id', 'parent_id');
+        return $this->belongsTo(Classe::class);
     }
 
-    /**
-     * RELATION : Un élève a plusieurs présences
-     */
-    public function presences()
+    public function tuteurs(): BelongsToMany
     {
-        return $this->hasMany(Presence::class);
+        return $this->belongsToMany(Tuteur::class, 'eleve_tuteur')
+            ->withPivot('lien_parente', 'contact_principal')
+            ->withTimestamps();
     }
 
-    /**
-     * RELATION : Un élève a plusieurs notes
-     */
-    public function notes()
+    public function notes(): HasMany
     {
         return $this->hasMany(Note::class);
     }
 
-    /**
-     * Calculer le nom complet
-     */
-    public function getNomCompletAttribute()
+    public function presences(): HasMany
     {
-        return $this->prenom . ' ' . $this->nom;
+        return $this->hasMany(Presence::class);
+    }
+
+    public function paiements(): HasMany
+    {
+        return $this->hasMany(Paiement::class);
+    }
+
+    public function bulletins(): HasMany
+    {
+        return $this->hasMany(Bulletin::class);
+    }
+
+    public function nomComplet(): string
+    {
+        return "{$this->prenom} {$this->nom}";
+    }
+
+    public function moyenneTrimestre(int $trimestreId): ?float
+    {
+        $notes = $this->notes()->where('trimestre_id', $trimestreId)->get();
+
+        if ($notes->isEmpty()) {
+            return null;
+        }
+
+        $totalPondere = $notes->sum(fn (Note $note) => ($note->valeur / $note->bareme) * 20 * $note->coefficient);
+        $totalCoefficients = $notes->sum('coefficient');
+
+        return $totalCoefficients > 0 ? round($totalPondere / $totalCoefficients, 2) : null;
     }
 
     /**
-     * Calculer l'âge
+     * Moyenne par matière puis moyenne générale pondérée par le coefficient de chaque matière.
+     *
+     * @return array{matieres: \Illuminate\Support\Collection, moyenne_generale: float|null}
      */
-    public function getAgeAttribute()
+    public function bulletinDonnees(int $trimestreId): array
     {
-        return $this->date_naissance->age;
+        $notes = $this->notes()
+            ->where('trimestre_id', $trimestreId)
+            ->with('matiere')
+            ->get()
+            ->groupBy('matiere_id');
+
+        $matieres = $notes->map(function ($notesMatiere) {
+            $matiere = $notesMatiere->first()->matiere;
+            $totalPondere = $notesMatiere->sum(fn (Note $n) => $n->noteSur20() * $n->coefficient);
+            $totalCoefficients = $notesMatiere->sum('coefficient');
+
+            return [
+                'matiere' => $matiere,
+                'moyenne' => $totalCoefficients > 0 ? round($totalPondere / $totalCoefficients, 2) : null,
+            ];
+        })->filter(fn ($m) => $m['moyenne'] !== null)->values();
+
+        $totalPondereGeneral = $matieres->sum(fn ($m) => $m['moyenne'] * (float) $m['matiere']->coefficient_defaut);
+        $totalCoefficientsGeneral = $matieres->sum(fn ($m) => (float) $m['matiere']->coefficient_defaut);
+
+        return [
+            'matieres' => $matieres,
+            'moyenne_generale' => $totalCoefficientsGeneral > 0 ? round($totalPondereGeneral / $totalCoefficientsGeneral, 2) : null,
+        ];
+    }
+
+    public function tauxPresenceTrimestre(int $trimestreId): ?float
+    {
+        $presences = $this->presences()->where('trimestre_id', $trimestreId)->get();
+
+        if ($presences->isEmpty()) {
+            return null;
+        }
+
+        $presents = $presences->where('statut', 'present')->count();
+
+        return round(($presents / $presences->count()) * 100, 1);
     }
 }

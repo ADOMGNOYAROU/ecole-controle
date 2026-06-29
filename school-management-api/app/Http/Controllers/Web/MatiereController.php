@@ -3,86 +3,83 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\MatiereRequest;
 use App\Models\Matiere;
-use Illuminate\Http\Request;
+use App\Services\RapportPdfService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class MatiereController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): View
     {
-        $matieres = Matiere::latest()->paginate(10);
+        $this->authorize('viewAny', Matiere::class);
+
+        $matieres = Matiere::orderBy('nom')->paginate(20);
+
         return view('matieres.index', compact('matieres'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function rapport(RapportPdfService $rapportPdf): Response
     {
+        $this->authorize('viewAny', Matiere::class);
+
+        $matieres = Matiere::orderBy('nom')->get();
+
+        $lignes = $matieres->map(fn (Matiere $matiere) => [
+            $matiere->nom,
+            $matiere->code ?? '—',
+            $matiere->coefficient_defaut,
+        ])->all();
+
+        $pdf = $rapportPdf->listePdf(
+            'Liste des matières',
+            ['Matière', 'Code', 'Coefficient par défaut'],
+            $lignes,
+        );
+
+        return $pdf->download('rapport-matieres-'.now()->format('Y-m-d').'.pdf');
+    }
+
+    public function create(): View
+    {
+        $this->authorize('create', Matiere::class);
+
         return view('matieres.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(MatiereRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'nom' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'coefficient' => 'required|numeric|min:1|max:10',
-        ]);
+        $this->authorize('create', Matiere::class);
 
-        Matiere::create($validated);
+        Matiere::create($request->validated());
 
-        return redirect()->route('matieres.index')
-                        ->with('success', 'Matière créée avec succès.');
+        return redirect()->route('matieres.index')->with('success', 'Matière créée.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Matiere $matiere)
+    public function edit(Matiere $matiere): View
     {
-        return view('matieres.show', compact('matiere'));
-    }
+        $this->authorize('update', $matiere);
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Matiere $matiere)
-    {
         return view('matieres.edit', compact('matiere'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Matiere $matiere)
+    public function update(MatiereRequest $request, Matiere $matiere): RedirectResponse
     {
-        $validated = $request->validate([
-            'nom' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'coefficient' => 'required|numeric|min:1|max:10',
-        ]);
+        $this->authorize('update', $matiere);
 
-        $matiere->update($validated);
+        $matiere->update($request->validated());
 
-        return redirect()->route('matieres.index')
-                        ->with('success', 'Matière mise à jour avec succès.');
+        return redirect()->route('matieres.index')->with('success', 'Matière mise à jour.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Matiere $matiere)
+    public function destroy(Matiere $matiere): RedirectResponse
     {
+        $this->authorize('delete', $matiere);
+
         $matiere->delete();
 
-        return redirect()->route('matieres.index')
-                        ->with('success', 'Matière supprimée avec succès.');
+        return redirect()->route('matieres.index')->with('success', 'Matière supprimée.');
     }
 }

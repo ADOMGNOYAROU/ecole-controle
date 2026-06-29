@@ -2,67 +2,51 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Presence extends Model
 {
-    use HasFactory;
-
-    protected $table = 'presences';
+    use HasFactory, BelongsToEcole;
 
     protected $fillable = [
+        'ecole_id',
         'eleve_id',
         'classe_id',
+        'enseignant_id',
+        'trimestre_id',
         'date',
         'statut',
         'motif',
-        'enseignant_id',
     ];
 
     protected $casts = [
         'date' => 'date',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
     ];
 
-    /**
-     * RELATION : Une présence appartient à un élève
-     */
-    public function eleve()
+    public const STATUT_PRESENT = 'present';
+    public const STATUT_ABSENT = 'absent';
+    public const STATUT_RETARD = 'retard';
+
+    public function eleve(): BelongsTo
     {
         return $this->belongsTo(Eleve::class);
     }
 
-    /**
-     * RELATION : Une présence appartient à une classe
-     */
-    public function classe()
+    public function classe(): BelongsTo
     {
         return $this->belongsTo(Classe::class);
     }
 
-    /**
-     * RELATION : Une présence est marquée par un enseignant
-     */
-    public function enseignant()
+    public function enseignant(): BelongsTo
     {
         return $this->belongsTo(Enseignant::class);
     }
 
-    /**
-     * Scope : Filtrer par date
-     */
-    public function scopeByDate($query, $date)
+    public function trimestre(): BelongsTo
     {
-        return $query->whereDate('date', $date);
-    }
-
-    /**
-     * Scope : Filtrer par statut
-     */
-    public function scopeByStatut($query, $statut)
-    {
-        return $query->where('statut', $statut);
+        return $this->belongsTo(Trimestre::class);
     }
 }

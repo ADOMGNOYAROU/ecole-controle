@@ -20,15 +20,15 @@ class CreateAdminUser extends Command
      *
      * @var string
      */
-    protected $description = 'Créer un nouvel utilisateur administrateur';
+    protected $description = 'Créer un nouveau super-administrateur de la plateforme (sans école rattachée)';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        $name = $this->ask('Entrez le nom de l\'administrateur', 'Admin');
-        $email = $this->ask('Entrez l\'email de l\'administrateur', 'admin@example.com');
+        $name = $this->ask('Entrez le nom du super-administrateur', 'Super Admin');
+        $email = $this->ask('Entrez l\'email du super-administrateur', 'superadmin@example.com');
         $password = $this->secret('Entrez le mot de passe (min 8 caractères)');
 
         if (strlen($password) < 8) {
@@ -37,13 +37,14 @@ class CreateAdminUser extends Command
         }
 
         $user = User::create([
+            'ecole_id' => null,
             'name' => $name,
             'email' => $email,
             'password' => Hash::make($password),
-            'role' => 'admin',
+            'role' => User::ROLE_SUPER_ADMIN,
         ]);
 
-        $this->info('Utilisateur administrateur créé avec succès !');
+        $this->info('Super-administrateur créé avec succès !');
         $this->info('Email: ' . $email);
         $this->info('Mot de passe: [le mot de passe que vous avez choisi]');
 

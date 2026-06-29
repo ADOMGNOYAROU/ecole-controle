@@ -2,78 +2,86 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Classe extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToEcole;
 
     protected $table = 'classes';
 
     protected $fillable = [
+        'ecole_id',
         'nom',
         'niveau',
-        'effectif_max',
-        'annee_scolaire',
+        'annee_scolaire_id',
+        'enseignant_principal_id',
+        'capacite',
     ];
 
-    protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-    ];
+    public function anneeScolaire(): BelongsTo
+    {
+        return $this->belongsTo(AnneeScolaire::class);
+    }
 
-    /**
-     * RELATION : Une classe a plusieurs élèves
-     */
-    public function eleves()
+    public function enseignantPrincipal(): BelongsTo
+    {
+        return $this->belongsTo(Enseignant::class, 'enseignant_principal_id');
+    }
+
+    public function eleves(): HasMany
     {
         return $this->hasMany(Eleve::class);
     }
 
-    /**
-     * RELATION : Une classe a plusieurs enseignants
-     * (via la table de liaison enseignant_matiere_classe)
-     */
-    public function enseignants()
+    public function elevesActifs(): HasMany
     {
-        return $this->belongsToMany(
-            Enseignant::class,
-            'enseignant_matiere_classe',
-            'classe_id',
-            'enseignant_id'
-        )->withPivot('matiere_id')->withTimestamps();
+        return $this->eleves()->where('statut', 'actif');
     }
 
-    /**
-     * RELATION : Une classe a plusieurs présences
-     */
-    public function presences()
+    public function enseignants(): BelongsToMany
     {
-        return $this->hasMany(Presence::class);
+        return $this->belongsToMany(Enseignant::class, 'enseignant_matiere_classe')
+            ->withPivot('matiere_id')
+            ->withTimestamps()
+            ->distinct();
     }
 
-    /**
-     * RELATION : Une classe a plusieurs notes
-     */
-    public function notes()
+    public function matieres(): BelongsToMany
+    {
+        return $this->belongsToMany(Matiere::class, 'enseignant_matiere_classe')
+            ->withPivot('enseignant_id')
+            ->withTimestamps()
+            ->distinct();
+    }
+
+    public function notes(): HasMany
     {
         return $this->hasMany(Note::class);
     }
 
-    /**
-     * Calculer l'effectif actuel
-     */
-    public function getEffectifActuelAttribute()
+    public function presences(): HasMany
     {
-        return $this->eleves()->where('statut', 'actif')->count();
+        return $this->hasMany(Presence::class);
     }
 
-    /**
-     * Vérifier si la classe est pleine
-     */
-    public function isPleine()
+    public function creneauxHoraires(): HasMany
     {
-        return $this->effectif_actuel >= $this->effectif_max;
+        return $this->hasMany(CreneauHoraire::class);
+    }
+
+    public function annonces(): HasMany
+    {
+        return $this->hasMany(Annonce::class);
+    }
+
+    public function effectif(): int
+    {
+        return $this->elevesActifs()->count();
     }
 }

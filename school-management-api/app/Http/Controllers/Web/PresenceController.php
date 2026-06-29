@@ -3,202 +3,156 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\BulkPresenceRequest;
+use App\Http\Requests\PresenceRequest;
+use App\Models\Classe;
 use App\Models\Presence;
+use App\Models\Trimestre;
+use App\Services\RapportPdfService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class PresenceController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request): View
     {
-        $presences = Presence::with('eleve')->paginate(10);
-        return view('presences.index', compact('presences'));
-    }
+        $this->authorize('viewAny', Presence::class);
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        return view('presences.create');
-    }
+        $presences = $this->filtrer($request)
+            ->latest('date')
+            ->paginate(25)
+            ->withQueryString();
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'eleve_id' => 'required|exists:eleves,id',
-            'date' => 'required|date',
-            'statut' => 'required|in:present,absent,retard',
-            'motif' => 'nullable|string',
+        return view('presences.index', [
+            'presences' => $presences,
+            'classes' => Classe::orderBy('nom')->get(),
         ]);
-
-        // Récupérer l'élève pour obtenir son classe_id
-        $eleve = \App\Models\Eleve::find($request->eleve_id);
-        
-        if (!$eleve || !$eleve->classe_id) {
-            return back()->with('error', 'L\'élève n\'est pas assigné à une classe.');
-        }
-
-        // Vérifier si une présence existe déjà pour cet élève à cette date
-        $existingPresence = Presence::where('eleve_id', $request->eleve_id)
-            ->whereDate('date', $request->date)
-            ->first();
-
-        if ($existingPresence) {
-            // Mettre à jour la présence existante
-            $existingPresence->update([
-                'statut' => $request->statut,
-                'motif' => $request->motif,
-                'classe_id' => $eleve->classe_id, // Au cas où la classe a changé
-            ]);
-            $message = 'La présence a été mise à jour avec succès.';
-        } else {
-            // Créer une nouvelle présence
-            Presence::create([
-                'eleve_id' => $request->eleve_id,
-                'classe_id' => $eleve->classe_id,
-                'date' => $request->date,
-                'statut' => $request->statut,
-                'motif' => $request->motif,
-            ]);
-            $message = 'Présence enregistrée avec succès.';
-        }
-
-        return redirect()->route('presences.index')
-            ->with('success', $message);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Presence $presence)
+    public function rapport(Request $request, RapportPdfService $rapportPdf): Response
     {
-        return view('presences.show', compact('presence'));
+        $this->authorize('viewAny', Presence::class);
+
+        $presences = $this->filtrer($request)->latest('date')->get();
+
+        $lignes = $presences->map(fn (Presence $presence) => [
+            $presence->eleve?->nomComplet() ?? '—',
+            $presence->classe?->nom ?? '—',
+            $presence->date->format('d/m/Y'),
+            ucfirst($presence->statut),
+            $presence->motif ?? '—',
+        ])->all();
+
+        $pdf = $rapportPdf->listePdf(
+            'Liste des présences',
+            ['Élève', 'Classe', 'Date', 'Statut', 'Motif'],
+            $lignes,
+        );
+
+        return $pdf->download('rapport-presences-'.now()->format('Y-m-d').'.pdf');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Presence $presence)
+    private function filtrer(Request $request)
     {
-        return view('presences.edit', compact('presence'));
+        $enseignant = Auth::user()->enseignant;
+
+        return Presence::with(['eleve', 'classe'])
+            ->when(! Auth::user()->isAdmin() && $enseignant, fn ($q) => $q->where('enseignant_id', $enseignant->id))
+            ->when($request->filled('classe_id'), fn ($q) => $q->where('classe_id', $request->classe_id))
+            ->when($request->filled('date'), fn ($q) => $q->whereDate('date', $request->date));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Presence $presence)
+    public function create(): View
     {
-        $request->validate([
-            'eleve_id' => 'required|exists:eleves,id',
-            'date' => 'required|date',
-            'statut' => 'required|in:present,absent,retard',
-            'motif' => 'nullable|string',
-        ]);
+        $this->authorize('create', Presence::class);
 
-        // Récupérer l'élève pour obtenir son classe_id
-        $eleve = \App\Models\Eleve::find($request->eleve_id);
-        
-        if (!$eleve || !$eleve->classe_id) {
-            return back()->with('error', 'L\'élève n\'est pas assigné à une classe.');
-        }
-
-        // Mettre à jour la présence avec le classe_id
-        $presence->update([
-            'eleve_id' => $request->eleve_id,
-            'classe_id' => $eleve->classe_id,
-            'date' => $request->date,
-            'statut' => $request->statut,
-            'motif' => $request->motif,
-        ]);
-
-        return redirect()->route('presences.index')
-            ->with('success', 'Présence mise à jour avec succès.');
+        return view('presences.create', ['classes' => Classe::orderBy('nom')->get()]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Presence $presence)
+    public function store(PresenceRequest $request): RedirectResponse
     {
-        $presence->delete();
+        $this->authorize('create', Presence::class);
 
-        return redirect()->route('presences.index')
-            ->with('success', 'Présence supprimée avec succès.');
+        Presence::updateOrCreate(
+            ['eleve_id' => $request->eleve_id, 'date' => $request->date],
+            [
+                ...$request->validated(),
+                'enseignant_id' => Auth::user()->enseignant?->id,
+                'trimestre_id' => $request->trimestre_id ?? Trimestre::actuel()?->id,
+            ]
+        );
+
+        return redirect()->route('presences.index')->with('success', 'Présence enregistrée.');
     }
 
-    /**
-     * Show bulk attendance form.
-     */
-    public function bulk()
+    public function bulk(): View
     {
-        $user = auth()->user();
-        
-        if ($user->isAdmin()) {
-            // Administrateur peut voir toutes les classes
-            $classes = \App\Models\Classe::all();
-        } elseif ($user->isEnseignant()) {
-            // Enseignant ne voit que ses classes
-            if ($user->enseignant) {
-                $classes = $user->enseignant->classes;
-            } else {
-                $classes = collect(); // Collection vide si pas de relation enseignant
-            }
-        } else {
-            // Autres rôles ne peuvent pas accéder
-            abort(403, 'Accès non autorisé');
-        }
-        
-        return view('presences.bulk', compact('classes'));
+        $this->authorize('create', Presence::class);
+
+        return view('presences.bulk', ['classes' => Classe::orderBy('nom')->get()]);
     }
 
-    /**
-     * Store bulk attendance.
-     */
-    public function bulkStore(Request $request)
+    public function elevesPourAppel(Classe $classe)
     {
-        $user = auth()->user();
-        
-        $request->validate([
-            'date' => 'required|date',
-            'presences' => 'required|array',
-            'presences.*.eleve_id' => 'required|exists:eleves,id',
-            'presences.*.statut' => 'required|in:present,absent,retard',
-        ]);
+        $this->authorize('create', Presence::class);
 
-        // Vérifier les permissions pour les enseignants
-        if ($user->isEnseignant()) {
-            $enseignantClasses = $user->enseignant->classes->pluck('id');
-            
-            foreach ($request->presences as $presence) {
-                $eleve = \App\Models\Eleve::find($presence['eleve_id']);
-                
-                // Vérifier que l'élève appartient à une classe enseignée par cet enseignant
-                if (!$enseignantClasses->contains($eleve->classe_id)) {
-                    abort(403, 'Vous ne pouvez pas marquer la présence pour cet élève');
-                }
-            }
-        }
+        return response()->json(
+            $classe->elevesActifs()->orderBy('nom')->get(['id', 'nom', 'prenom', 'matricule'])
+        );
+    }
 
-        foreach ($request->presences as $presence) {
+    public function bulkStore(BulkPresenceRequest $request): RedirectResponse
+    {
+        $this->authorize('create', Presence::class);
+
+        $donnees = $request->validated();
+        $enseignant = Auth::user()->enseignant;
+        $trimestreId = $donnees['trimestre_id'] ?? Trimestre::actuel()?->id;
+
+        foreach ($donnees['presences'] as $entry) {
             Presence::updateOrCreate(
+                ['eleve_id' => $entry['eleve_id'], 'date' => $donnees['date']],
                 [
-                    'eleve_id' => $presence['eleve_id'],
-                    'date' => $request->date,
-                ],
-                [
-                    'statut' => $presence['statut'],
-                    'motif' => $presence['motif'] ?? null,
+                    'classe_id' => $donnees['classe_id'],
+                    'enseignant_id' => $enseignant?->id,
+                    'trimestre_id' => $trimestreId,
+                    'statut' => $entry['statut'],
+                    'motif' => $entry['motif'] ?? null,
                 ]
             );
         }
 
-        return redirect()->route('presences.index')
-            ->with('success', 'Appel enregistré avec succès.');
+        return redirect()->route('presences.index')->with('success', 'Présences enregistrées pour la classe.');
+    }
+
+    public function edit(Presence $presence): View
+    {
+        $this->authorize('update', $presence);
+
+        return view('presences.edit', [
+            'presence' => $presence,
+            'classes' => Classe::orderBy('nom')->get(),
+        ]);
+    }
+
+    public function update(PresenceRequest $request, Presence $presence): RedirectResponse
+    {
+        $this->authorize('update', $presence);
+
+        $presence->update($request->validated());
+
+        return redirect()->route('presences.index')->with('success', 'Présence mise à jour.');
+    }
+
+    public function destroy(Presence $presence): RedirectResponse
+    {
+        $this->authorize('delete', $presence);
+
+        $presence->delete();
+
+        return redirect()->route('presences.index')->with('success', 'Présence supprimée.');
     }
 }

@@ -3,94 +3,61 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest;
-use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    /**
-     * Enregistrement d'un nouvel utilisateur
-     */
-    public function register(RegisterRequest $request): JsonResponse
+    public function login(Request $request): JsonResponse
     {
-        $validated = $request->validated();
-        
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role' => $validated['role'],
-            'telephone' => $validated['telephone'] ?? null,
+        $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string'],
         ]);
 
-        // Si c'est un enseignant, on crée le profil enseignant
-        if ($validated['role'] === 'enseignant') {
-            $user->enseignant()->create([
-                'specialite' => $validated['specialite'] ?? null,
+        $throttleKey = strtolower($request->input('email')).'|'.$request->ip();
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            throw ValidationException::withMessages([
+                'email' => ['Trop de tentatives. Réessayez dans '.RateLimiter::availableIn($throttleKey).' secondes.'],
             ]);
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $user = User::where('email', $request->email)->first();
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'user' => $user,
-                'access_token' => $token,
-                'token_type' => 'Bearer',
-            ]
-        ], 201);
-    }
+        if (! $user || ! Hash::check($request->password, $user->password)) {
+            RateLimiter::hit($throttleKey);
 
-    /**
-     * Connexion d'un utilisateur
-     */
-    public function login(LoginRequest $request): JsonResponse
-    {
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            return response()->json([
-                'message' => 'Identifiants invalides',
-            ], 401);
+            throw ValidationException::withMessages(['email' => ['Identifiants invalides.']]);
         }
 
-        $user = User::where('email', $request->email)->firstOrFail();
-        $token = $user->createToken('auth_token')->plainTextToken;
+        RateLimiter::clear($throttleKey);
+
+        $token = $user->createToken('mobile')->plainTextToken;
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'user' => $user,
-                'access_token' => $token,
-                'token_type' => 'Bearer',
-            ]
+            'token' => $token,
+            'user' => $user,
         ]);
     }
 
-    /**
-     * Déconnexion de l'utilisateur
-     */
-    public function logout(): JsonResponse
+    public function logout(Request $request): JsonResponse
     {
-        Auth::user()->currentAccessToken()->delete();
+        $request->user()->currentAccessToken()->delete();
 
-        return response()->json([
-            'message' => 'Déconnexion réussie',
-        ]);
+        return response()->json(['success' => true]);
     }
 
-    /**
-     * Récupérer l'utilisateur connecté
-     */
-    public function me(): JsonResponse
+    public function me(Request $request): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'data' => Auth::user()
-        ]);
+        $user = $request->user()->load(['eleve.classe', 'enseignant', 'tuteur']);
+
+        return response()->json(['success' => true, 'user' => $user]);
     }
 }

@@ -3,111 +3,124 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\EnseignantRequest;
+use App\Models\Classe;
 use App\Models\Enseignant;
+use App\Models\Matiere;
+use App\Services\RapportPdfService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class EnseignantController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): View
     {
-        $enseignants = Enseignant::paginate(10);
+        $this->authorize('viewAny', Enseignant::class);
+
+        $enseignants = Enseignant::withCount('classesPrincipales')
+            ->orderBy('nom')
+            ->paginate(20);
+
         return view('enseignants.index', compact('enseignants'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function rapport(RapportPdfService $rapportPdf): Response
     {
-        return view('enseignants.create');
+        $this->authorize('viewAny', Enseignant::class);
+
+        $enseignants = Enseignant::withCount('classesPrincipales')->orderBy('nom')->get();
+
+        $lignes = $enseignants->map(fn (Enseignant $enseignant) => [
+            $enseignant->nomComplet(),
+            $enseignant->specialite ?? '—',
+            $enseignant->telephone ?? '—',
+            $enseignant->classes_principales_count,
+        ])->all();
+
+        $pdf = $rapportPdf->listePdf(
+            'Liste des enseignants',
+            ['Nom complet', 'Spécialité', 'Téléphone', 'Classes principales'],
+            $lignes,
+        );
+
+        return $pdf->download('rapport-enseignants-'.now()->format('Y-m-d').'.pdf');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function create(): View
     {
-        $request->validate([
-            'nom' => 'required|string|max:255',
-            'prenom' => 'required|string|max:255',
-            'email' => 'required|email|unique:enseignants,email',
-            'telephone' => 'nullable|string',
-            'adresse' => 'nullable|string',
-            'specialite' => 'required|string|max:255',
-            'date_embauche' => 'required|date',
+        $this->authorize('create', Enseignant::class);
+
+        return view('enseignants.create', [
+            'matieres' => Matiere::orderBy('nom')->get(),
+            'classes' => Classe::orderBy('nom')->get(),
         ]);
-
-        Enseignant::create($request->all());
-
-        return redirect()->route('enseignants.index')
-            ->with('success', 'Enseignant ajouté avec succès.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Enseignant $enseignant)
+    public function store(EnseignantRequest $request): RedirectResponse
     {
+        $this->authorize('create', Enseignant::class);
+
+        $enseignant = Enseignant::create($request->safe()->except(['matieres', 'classes']));
+
+        $this->syncAffectations($enseignant, $request->input('matieres', []), $request->input('classes', []));
+
+        return redirect()->route('enseignants.show', $enseignant)->with('success', 'Enseignant ajouté avec succès.');
+    }
+
+    public function show(Enseignant $enseignant): View
+    {
+        $this->authorize('view', $enseignant);
+
+        $enseignant->load(['classesPrincipales', 'matieres', 'classes', 'responsabilites']);
+
         return view('enseignants.show', compact('enseignant'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Enseignant $enseignant)
+    public function edit(Enseignant $enseignant): View
     {
-        return view('enseignants.edit', compact('enseignant'));
-    }
+        $this->authorize('update', $enseignant);
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Enseignant $enseignant)
-    {
-        $request->validate([
-            'nom' => 'required|string|max:255',
-            'prenom' => 'required|string|max:255',
-            'email' => 'required|email|unique:enseignants,email,' . $enseignant->id,
-            'telephone' => 'nullable|string',
-            'adresse' => 'nullable|string',
-            'specialite' => 'required|string|max:255',
-            'date_embauche' => 'required|date',
+        return view('enseignants.edit', [
+            'enseignant' => $enseignant,
+            'matieres' => Matiere::orderBy('nom')->get(),
+            'classes' => Classe::orderBy('nom')->get(),
+            'matiereIds' => $enseignant->matieres()->pluck('matieres.id')->all(),
+            'classeIds' => $enseignant->classes()->pluck('classes.id')->all(),
         ]);
-
-        $enseignant->update($request->all());
-
-        return redirect()->route('enseignants.index')
-            ->with('success', 'Enseignant mis à jour avec succès.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Enseignant $enseignant)
+    public function update(EnseignantRequest $request, Enseignant $enseignant): RedirectResponse
     {
+        $this->authorize('update', $enseignant);
+
+        $enseignant->update($request->safe()->except(['matieres', 'classes']));
+
+        $this->syncAffectations($enseignant, $request->input('matieres', []), $request->input('classes', []));
+
+        return redirect()->route('enseignants.show', $enseignant)->with('success', 'Enseignant mis à jour.');
+    }
+
+    public function destroy(Enseignant $enseignant): RedirectResponse
+    {
+        $this->authorize('delete', $enseignant);
+
         $enseignant->delete();
 
-        return redirect()->route('enseignants.index')
-            ->with('success', 'Enseignant supprimé avec succès.');
+        return redirect()->route('enseignants.index')->with('success', 'Enseignant supprimé.');
     }
 
     /**
-     * Display classes of the teacher.
+     * Associe l'enseignant à chaque combinaison matière x classe sélectionnée.
      */
-    public function classes(Enseignant $enseignant)
+    private function syncAffectations(Enseignant $enseignant, array $matiereIds, array $classeIds): void
     {
-        $classes = $enseignant->classes()->paginate(10);
-        return view('enseignants.classes', compact('enseignant', 'classes'));
-    }
+        $enseignant->matieres()->newPivotStatement()->where('enseignant_id', $enseignant->id)->delete();
 
-    /**
-     * Display schedule of the teacher.
-     */
-    public function schedule(Enseignant $enseignant)
-    {
-        return view('enseignants.schedule', compact('enseignant'));
+        foreach ($matiereIds as $matiereId) {
+            foreach ($classeIds as $classeId) {
+                $enseignant->matieres()->attach($matiereId, ['classe_id' => $classeId]);
+            }
+        }
     }
 }

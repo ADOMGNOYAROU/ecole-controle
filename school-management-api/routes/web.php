@@ -1,159 +1,158 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Web\DashboardController;
+use App\Http\Controllers\Web\AbonnementController;
+use App\Http\Controllers\Web\AnneeScolaireController;
+use App\Http\Controllers\Web\AnnonceController;
+use App\Http\Controllers\Web\Auth\LoginController;
+use App\Http\Controllers\Web\BulletinController;
 use App\Http\Controllers\Web\ClasseController;
+use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\EleveController;
+use App\Http\Controllers\Web\EmploiDuTempsController;
 use App\Http\Controllers\Web\EnseignantController;
-use App\Http\Controllers\Web\PresenceController;
-use App\Http\Controllers\Web\NoteController;
-use App\Http\Controllers\Web\SettingsController;
+use App\Http\Controllers\Web\EspaceEleveController;
+use App\Http\Controllers\Web\EspaceParentController;
+use App\Http\Controllers\Web\InscriptionController;
 use App\Http\Controllers\Web\MatiereController;
-use App\Http\Controllers\Web\ParentController;
-use App\Http\Controllers\Web\ProgressController;
-use App\Http\Controllers\Web\ProfTitulaireController;
+use App\Http\Controllers\Web\NoteController;
+use App\Http\Controllers\Web\NotificationController;
+use App\Http\Controllers\Web\PaiementController;
+use App\Http\Controllers\Web\PresenceController;
+use App\Http\Controllers\Web\ProfileController;
+use App\Http\Controllers\Web\SuperAdmin\DashboardController as SuperAdminDashboardController;
+use App\Http\Controllers\Web\SuperAdmin\EcoleController as SuperAdminEcoleController;
+use App\Http\Controllers\Web\SuperAdmin\FactureController as SuperAdminFactureController;
+use App\Http\Controllers\Web\TrimestreController;
+use App\Http\Controllers\Web\TuteurController;
+use App\Http\Controllers\Web\UserAccountController;
+use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
-
-// Authentication routes
-use App\Http\Controllers\Web\SimpleLoginController;
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [SimpleLoginController::class, 'show'])->name('login');
-    Route::post('/login', [SimpleLoginController::class, 'login']);
+    Route::get('/login', [LoginController::class, 'show'])->name('login');
+    Route::post('/login', [LoginController::class, 'login']);
+
+    Route::get('/inscription', [InscriptionController::class, 'show'])->name('inscription.show');
+    Route::post('/inscription', [InscriptionController::class, 'store'])->name('inscription.store');
 });
 
-Route::post('/logout', [SimpleLoginController::class, 'logout'])->name('logout');
+Route::middleware('auth')->group(function () {
+    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    // Dashboard principal (accessible à tous les rôles)
+    Route::get('/', fn () => redirect()->route('dashboard'));
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
-    // Dashboard spécifique pour les élèves
-    Route::get('/dashboard-eleve', [DashboardController::class, 'eleveDashboard'])->name('dashboard.eleve');
-    
-    // Dashboard spécifique pour les parents
-    Route::get('/dashboard-parent', [DashboardController::class, 'parentDashboard'])->name('dashboard.parent');
-    
-    // Routes pour les enseignants, profs titulaires et admins
-    Route::middleware(['role:enseignant,prof_titulaire,admin'])->group(function () {
-        Route::get('/dashboard-enseignant', function () {
-            return view('dashboard_enseignant');
-        })->name('dashboard.enseignant');
-        Route::get('/dashboard-modern', [DashboardController::class, 'modern'])->name('dashboard.modern');
-        
-        // Routes de gestion des comptes (admin uniquement)
-        Route::middleware(['role:admin'])->group(function () {
-            Route::get('/accounts', [App\Http\Controllers\Web\UserAccountController::class, 'index'])->name('accounts.index');
-            Route::post('/accounts/create', [App\Http\Controllers\Web\UserAccountController::class, 'createManual'])->name('accounts.create.manual');
-            Route::post('/accounts/generate', [App\Http\Controllers\Web\UserAccountController::class, 'generateAccounts'])->name('accounts.generate');
-            Route::post('/accounts/reset-password/{userId}', [App\Http\Controllers\Web\UserAccountController::class, 'resetPassword'])->name('accounts.reset-password');
-            Route::get('/accounts/export', [App\Http\Controllers\Web\UserAccountController::class, 'exportAccounts'])->name('accounts.export');
+
+    // Profil personnel (toutes les sessions authentifiées)
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
+    // Abonnement de l'école (accessible même hors Premium pour pouvoir s'abonner)
+    Route::middleware('role:admin')->prefix('abonnement')->name('abonnement.')->group(function () {
+        Route::get('/', [AbonnementController::class, 'index'])->name('index');
+        Route::post('/souscrire', [AbonnementController::class, 'souscrire'])->name('souscrire');
+    });
+
+    Route::get('/emploi-du-temps/{classe?}', [EmploiDuTempsController::class, 'index'])->name('emploi-du-temps.index');
+
+    // Fonctionnalités Premium : notifications, annonces, bulletins, paiements,
+    // espaces self-service élève/parent, gestion des comptes.
+    Route::middleware('premium')->group(function () {
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::patch('/notifications/{notification}/lue', [NotificationController::class, 'marquerLue'])->name('notifications.lue');
+        Route::patch('/notifications/lues', [NotificationController::class, 'marquerToutesLues'])->name('notifications.toutes-lues');
+
+        Route::get('/annonces', [AnnonceController::class, 'index'])->name('annonces.index');
+
+        Route::middleware('role:eleve')->prefix('mon-espace')->name('mon-espace.')->group(function () {
+            Route::get('/notes', [EspaceEleveController::class, 'notes'])->name('notes');
+            Route::get('/presences', [EspaceEleveController::class, 'presences'])->name('presences');
+            Route::get('/paiements', [EspaceEleveController::class, 'paiements'])->name('paiements');
         });
-        
-        // Classes
-        Route::resource('classes', ClasseController::class);
-        Route::get('/classes/{classe}/students', [ClasseController::class, 'students'])->name('classes.students');
-        
-        // Students
-        Route::resource('eleves', EleveController::class);
-        Route::get('/eleves/{eleve}/grades', [EleveController::class, 'grades'])->name('eleves.grades');
-        Route::get('/eleves/{eleve}/attendances', [EleveController::class, 'attendances'])->name('eleves.attendances');
-        
-        // Teachers
-        Route::resource('enseignants', EnseignantController::class);
-        Route::get('/enseignants/{enseignant}/classes', [EnseignantController::class, 'classes'])->name('enseignants.classes');
-        Route::get('/enseignants/{enseignant}/schedule', [EnseignantController::class, 'schedule'])->name('enseignants.schedule');
-        
-        // Attendance
-        Route::resource('presences', PresenceController::class);
-        Route::get('/presences/bulk', [PresenceController::class, 'bulk'])->name('presences.bulk');
-        Route::post('/presences/bulk', [PresenceController::class, 'bulkStore'])->name('presences.bulk.store');
-        
-        // Grades
-        Route::resource('notes', NoteController::class);
+
+        Route::middleware('role:parent')->prefix('mes-enfants')->name('mes-enfants.')->group(function () {
+            Route::get('/', [EspaceParentController::class, 'enfants'])->name('index');
+            Route::get('/{eleve}', [EspaceParentController::class, 'enfant'])->name('show');
+        });
+
+        Route::get('/bulletins', [BulletinController::class, 'index'])->name('bulletins.index')->middleware('role:admin,enseignant');
+        Route::post('/bulletins/classes/{classe}/trimestres/{trimestre}', [BulletinController::class, 'genererClasse'])->name('bulletins.generer')->middleware('role:admin,enseignant');
+        Route::get('/bulletins/eleves/{eleve}/trimestres/{trimestre}', [BulletinController::class, 'show'])->name('bulletins.show');
+
+        Route::middleware('role:admin,enseignant')->group(function () {
+            Route::post('/annonces', [AnnonceController::class, 'store'])->name('annonces.store');
+            Route::get('/annonces/create', [AnnonceController::class, 'create'])->name('annonces.create');
+            Route::delete('/annonces/{annonce}', [AnnonceController::class, 'destroy'])->name('annonces.destroy');
+
+            // Rapports PDF par section (fonctionnalité Premium)
+            Route::get('/classes/rapport', [ClasseController::class, 'rapport'])->name('classes.rapport');
+            Route::get('/eleves/rapport', [EleveController::class, 'rapport'])->name('eleves.rapport');
+            Route::get('/enseignants/rapport', [EnseignantController::class, 'rapport'])->name('enseignants.rapport');
+            Route::get('/matieres/rapport', [MatiereController::class, 'rapport'])->name('matieres.rapport');
+            Route::get('/tuteurs/rapport', [TuteurController::class, 'rapport'])->name('tuteurs.rapport');
+            Route::get('/notes/rapport', [NoteController::class, 'rapport'])->name('notes.rapport');
+            Route::get('/presences/rapport', [PresenceController::class, 'rapport'])->name('presences.rapport');
+        });
+
+        Route::middleware('role:admin')->group(function () {
+            Route::resource('paiements', PaiementController::class)->except('show');
+            Route::get('/paiements/rapport', [PaiementController::class, 'rapport'])->name('paiements.rapport');
+
+            Route::get('/comptes', [UserAccountController::class, 'index'])->name('comptes.index');
+            Route::post('/comptes/generer', [UserAccountController::class, 'generer'])->name('comptes.generer');
+            Route::post('/comptes/{user}/reinitialiser-mot-de-passe', [UserAccountController::class, 'reinitialiserMotDePasse'])->name('comptes.reinitialiser');
+            Route::delete('/comptes/{user}', [UserAccountController::class, 'destroy'])->name('comptes.destroy');
+        });
+    });
+
+    // Gestion des notes et présences (cœur gratuit) : admin + enseignant
+    Route::middleware('role:admin,enseignant')->group(function () {
         Route::get('/notes/bulk', [NoteController::class, 'bulk'])->name('notes.bulk');
         Route::post('/notes/bulk', [NoteController::class, 'bulkStore'])->name('notes.bulk.store');
         Route::get('/notes/reports', [NoteController::class, 'reports'])->name('notes.reports');
-        
-        // Matières (Subjects)
-        Route::resource('matieres', MatiereController::class);
-        
-        // Parents
-        Route::resource('parents', ParentController::class);
-        
-        // Profile and Settings
-        Route::get('/profile', function () {
-            return view('profile');
-        })->name('profile');
-        
-        Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
-        Route::post('/settings', [SettingsController::class, 'store'])->name('settings.store');
+        Route::get('/notes/classes/{classe}/eleves', [NoteController::class, 'elevesPourSaisie'])->name('notes.eleves');
+        Route::resource('notes', NoteController::class)->except('show');
+
+        Route::get('/presences/bulk', [PresenceController::class, 'bulk'])->name('presences.bulk');
+        Route::post('/presences/bulk', [PresenceController::class, 'bulkStore'])->name('presences.bulk.store');
+        Route::get('/presences/classes/{classe}/eleves', [PresenceController::class, 'elevesPourAppel'])->name('presences.eleves');
+        Route::resource('presences', PresenceController::class)->except('show');
     });
-    
-    // Classes
-    Route::resource('classes', ClasseController::class);
-    Route::get('/classes/{classe}/students', [ClasseController::class, 'students'])->name('classes.students');
-    
-    // Students
-    Route::resource('eleves', EleveController::class);
-    Route::get('/eleves/{eleve}/grades', [EleveController::class, 'grades'])->name('eleves.grades');
-    Route::get('/eleves/{eleve}/attendances', [EleveController::class, 'attendances'])->name('eleves.attendances');
-    
-    // Teachers
-    Route::resource('enseignants', EnseignantController::class);
-    Route::get('/enseignants/{enseignant}/classes', [EnseignantController::class, 'classes'])->name('enseignants.classes');
-    Route::get('/enseignants/{enseignant}/schedule', [EnseignantController::class, 'schedule'])->name('enseignants.schedule');
-    
-    // Attendance
-    Route::resource('presences', PresenceController::class);
-    Route::get('/presences/bulk', [PresenceController::class, 'bulk'])->name('presences.bulk');
-    Route::post('/presences/bulk', [PresenceController::class, 'bulkStore'])->name('presences.bulk.store');
-    
-    // Grades
-    Route::resource('notes', NoteController::class);
-    Route::get('/notes/bulk', [NoteController::class, 'bulk'])->name('notes.bulk');
-    Route::post('/notes/bulk', [NoteController::class, 'bulkStore'])->name('notes.bulk.store');
-    Route::get('/notes/reports', [NoteController::class, 'reports'])->name('notes.reports');
-    
-    // Matières (Subjects)
-    Route::resource('matieres', MatiereController::class);
-    
-    // Parents
-    Route::resource('parents', ParentController::class);
-    
-    // Routes pour la gestion des professeurs titulaires
-    Route::get('/prof-titulaires', [ProfTitulaireController::class, 'index'])->name('prof-titulaire.index')->middleware('role:admin');
-    Route::post('/prof-titulaires/assign', [ProfTitulaireController::class, 'assign'])->name('prof-titulaire.assign')->middleware('role:admin');
-    Route::delete('/prof-titulaires/remove/{classe}', [ProfTitulaireController::class, 'remove'])->name('prof-titulaire.remove')->middleware('role:admin');
-    
-    // Routes pour le suivi des progrès
-    Route::get('/mes-progres', [ProgressController::class, 'showStudentProgress'])->name('progress.student');
-    Route::get('/mes-progres/{eleve}', [ProgressController::class, 'showStudentProgress'])->name('progress.student.detail');
-    Route::get('/suivi-classe/{classe}', [ProgressController::class, 'showClassProgress'])->name('progress.class')->middleware('role:prof_titulaire');
-    Route::get('/selection-eleve', [ProgressController::class, 'selectStudent'])->name('progress.select-student')->middleware('role:prof_titulaire');
-    
-    // API pour les données de progression (auth web)
-    Route::get('/api/progress/{eleve}', [ProgressController::class, 'getProgressData']);
-    
-    // Profile and Settings
-    Route::get('/profile', function () {
-        return view('profile');
-    })->name('profile');
-    
-    Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
-    Route::post('/settings', [SettingsController::class, 'store'])->name('settings.store');
-    
-    // Default redirect to dashboard
-    Route::get('/', function () {
-        return redirect()->route('dashboard');
+
+    // Administration complète (cœur gratuit) : admin uniquement
+    // (déclarée avant le bloc de consultation ci-dessous : les routes statiques
+    // /classes/create, /eleves/{eleve}/edit, etc. doivent être enregistrées
+    // avant la route générique /classes/{classe} pour ne pas être interceptées)
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('eleves', EleveController::class)->except(['index', 'show'])->parameters(['eleves' => 'eleve']);
+        Route::resource('enseignants', EnseignantController::class);
+        Route::resource('classes', ClasseController::class)->except(['index', 'show'])->parameters(['classes' => 'classe']);
+        Route::resource('matieres', MatiereController::class);
+        Route::resource('tuteurs', TuteurController::class);
+
+        Route::resource('annees-scolaires', AnneeScolaireController::class)->only(['index', 'store', 'update', 'destroy'])->parameters(['annees-scolaires' => 'anneeScolaire']);
+        Route::resource('trimestres', TrimestreController::class)->only(['index', 'store', 'update', 'destroy']);
+
+        Route::post('/emploi-du-temps', [EmploiDuTempsController::class, 'store'])->name('emploi-du-temps.store');
+        Route::delete('/emploi-du-temps/{creneauHoraire}', [EmploiDuTempsController::class, 'destroy'])->name('emploi-du-temps.destroy');
+    });
+
+    // Consultation des fiches élèves/classes (cœur gratuit) : admin + enseignant
+    Route::middleware('role:admin,enseignant')->group(function () {
+        Route::resource('eleves', EleveController::class)->only(['index', 'show'])->parameters(['eleves' => 'eleve']);
+        Route::get('/classes/{classe}', [ClasseController::class, 'show'])->name('classes.show');
+        Route::get('/classes', [ClasseController::class, 'index'])->name('classes.index');
+    });
+
+    // Back-office plateforme : super-admin uniquement
+    Route::middleware('role:super_admin')->prefix('super-admin')->name('super-admin.')->group(function () {
+        Route::get('/', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('/ecoles', [SuperAdminEcoleController::class, 'index'])->name('ecoles.index');
+        Route::get('/ecoles/{ecole}', [SuperAdminEcoleController::class, 'show'])->name('ecoles.show');
+        Route::patch('/ecoles/{ecole}/suspendre', [SuperAdminEcoleController::class, 'suspendre'])->name('ecoles.suspendre');
+        Route::patch('/ecoles/{ecole}/activer', [SuperAdminEcoleController::class, 'activer'])->name('ecoles.activer');
+
+        Route::get('/factures', [SuperAdminFactureController::class, 'index'])->name('factures.index');
+        Route::post('/factures/{facture}/confirmer', [SuperAdminFactureController::class, 'confirmer'])->name('factures.confirmer');
     });
 });

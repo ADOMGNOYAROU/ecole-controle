@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\Ecole;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -24,21 +26,45 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
+            'ecole_id' => Ecole::factory(),
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            'role' => User::ROLE_ADMIN,
             'remember_token' => Str::random(10),
         ];
     }
 
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
     public function unverified(): static
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    public function superAdmin(): static
+    {
+        return $this->state(['role' => User::ROLE_SUPER_ADMIN, 'ecole_id' => null]);
+    }
+
+    public function admin(): static
+    {
+        return $this->state(['role' => User::ROLE_ADMIN]);
+    }
+
+    public function enseignant(): static
+    {
+        return $this->state(['role' => User::ROLE_ENSEIGNANT]);
+    }
+
+    public function eleve(): static
+    {
+        return $this->state(['role' => User::ROLE_ELEVE]);
+    }
+
+    public function parent(): static
+    {
+        return $this->state(['role' => User::ROLE_PARENT]);
     }
 }

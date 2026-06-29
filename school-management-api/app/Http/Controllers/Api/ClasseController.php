@@ -3,58 +3,55 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\ClasseRequest;
 use App\Models\Classe;
+use Illuminate\Http\JsonResponse;
 
 class ClasseController extends Controller
 {
-    public function index()
+    public function index(): JsonResponse
     {
-        return response()->json(Classe::all());
+        $this->authorize('viewAny', Classe::class);
+
+        return response()->json(Classe::with('anneeScolaire')->withCount('eleves')->orderBy('nom')->get());
     }
 
-    public function store(Request $request)
+    public function store(ClasseRequest $request): JsonResponse
     {
-        $classe = Classe::create($request->all());
-        return response()->json($classe, 201);
+        $this->authorize('create', Classe::class);
+
+        return response()->json(Classe::create($request->validated()), 201);
     }
 
-    public function show($id)
+    public function show(Classe $classe): JsonResponse
     {
-        $classe = Classe::find($id);
-        if (!$classe) {
-            return response()->json(['message' => 'Classe non trouvée'], 404);
-        }
+        $this->authorize('view', $classe);
+
+        return response()->json($classe->load('eleves', 'enseignants', 'matieres'));
+    }
+
+    public function update(ClasseRequest $request, Classe $classe): JsonResponse
+    {
+        $this->authorize('update', $classe);
+
+        $classe->update($request->validated());
+
         return response()->json($classe);
     }
 
-    public function update(Request $request, $id)
+    public function destroy(Classe $classe): JsonResponse
     {
-        $classe = Classe::find($id);
-        if (!$classe) {
-            return response()->json(['message' => 'Classe non trouvée'], 404);
-        }
-        $classe->update($request->all());
-        return response()->json($classe);
-    }
+        $this->authorize('delete', $classe);
 
-    public function destroy($id)
-    {
-        $classe = Classe::find($id);
-        if (!$classe) {
-            return response()->json(['message' => 'Classe non trouvée'], 404);
-        }
         $classe->delete();
-        return response()->json(['message' => 'Classe supprimée']);
+
+        return response()->json(null, 204);
     }
 
-    public function getEleves($id)
+    public function eleves(Classe $classe): JsonResponse
     {
-        $classe = Classe::find($id);
-        if (!$classe) {
-            return response()->json(['message' => 'Classe non trouvée'], 404);
-        }
-        $eleves = $classe->eleves()->get(['id', 'nom', 'prenom']);
-        return response()->json($eleves);
+        $this->authorize('view', $classe);
+
+        return response()->json($classe->elevesActifs()->orderBy('nom')->get());
     }
 }

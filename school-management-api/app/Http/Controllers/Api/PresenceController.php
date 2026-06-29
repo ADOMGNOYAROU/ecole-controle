@@ -3,71 +3,64 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\PresenceRequest;
 use App\Models\Presence;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PresenceController extends Controller
 {
-    public function index()
+    public function index(Request $request): JsonResponse
     {
-        return response()->json(Presence::with('eleve')->get());
+        $this->authorize('viewAny', Presence::class);
+
+        $user = Auth::user();
+
+        $presences = Presence::with('classe')
+            ->when($user->isEleve(), fn ($q) => $q->where('eleve_id', $user->eleve?->id))
+            ->when($request->filled('eleve_id') && ! $user->isEleve(), fn ($q) => $q->where('eleve_id', $request->eleve_id))
+            ->when($request->filled('classe_id'), fn ($q) => $q->where('classe_id', $request->classe_id))
+            ->latest('date')
+            ->get();
+
+        return response()->json($presences);
     }
 
-    public function store(Request $request)
+    public function store(PresenceRequest $request): JsonResponse
     {
-        $presence = Presence::create($request->all());
+        $this->authorize('create', Presence::class);
+
+        $presence = Presence::updateOrCreate(
+            ['eleve_id' => $request->eleve_id, 'date' => $request->date],
+            [...$request->validated(), 'enseignant_id' => Auth::user()->enseignant?->id]
+        );
+
         return response()->json($presence, 201);
     }
 
-    public function storeBulk(Request $request)
+    public function show(Presence $presence): JsonResponse
     {
-        $presences = $request->all();
-        foreach ($presences as $presenceData) {
-            Presence::create($presenceData);
-        }
-        return response()->json(['message' => 'Présences enregistrées'], 201);
+        $this->authorize('view', $presence);
+
+        return response()->json($presence->load('classe', 'eleve'));
     }
 
-    public function show($id)
+    public function update(PresenceRequest $request, Presence $presence): JsonResponse
     {
-        $presence = Presence::with('eleve')->find($id);
-        if (!$presence) {
-            return response()->json(['message' => 'Présence non trouvée'], 404);
-        }
+        $this->authorize('update', $presence);
+
+        $presence->update($request->validated());
+
         return response()->json($presence);
     }
 
-    public function update(Request $request, $id)
+    public function destroy(Presence $presence): JsonResponse
     {
-        $presence = Presence::find($id);
-        if (!$presence) {
-            return response()->json(['message' => 'Présence non trouvée'], 404);
-        }
-        $presence->update($request->all());
-        return response()->json($presence);
-    }
+        $this->authorize('delete', $presence);
 
-    public function destroy($id)
-    {
-        $presence = Presence::find($id);
-        if (!$presence) {
-            return response()->json(['message' => 'Présence non trouvée'], 404);
-        }
         $presence->delete();
-        return response()->json(['message' => 'Présence supprimée']);
-    }
 
-    public function getByClasse($classeId)
-    {
-        $presences = Presence::whereHas('eleve', function($query) use ($classeId) {
-            $query->where('classe_id', $classeId);
-        })->with('eleve')->get();
-        return response()->json($presences);
-    }
-
-    public function getByEleve($eleveId)
-    {
-        $presences = Presence::where('eleve_id', $eleveId)->with('eleve')->get();
-        return response()->json($presences);
+        return response()->json(null, 204);
     }
 }

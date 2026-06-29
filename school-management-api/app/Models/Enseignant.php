@@ -2,85 +2,85 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Enseignant extends Model
 {
-    use HasFactory;
-
-    protected $table = 'enseignants';
+    use HasFactory, BelongsToEcole;
 
     protected $fillable = [
+        'ecole_id',
         'user_id',
-        'matricule',
+        'nom',
+        'prenom',
+        'telephone',
+        'email',
         'specialite',
         'date_embauche',
-        'statut',
+        'photo',
     ];
 
     protected $casts = [
         'date_embauche' => 'date',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
     ];
 
-    /**
-     * RELATION : Un enseignant appartient à un user
-     */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * RELATION : Un enseignant enseigne dans plusieurs classes
-     * (via la table de liaison enseignant_matiere_classe)
-     */
-    public function classes()
+    public function classesPrincipales(): HasMany
     {
-        return $this->belongsToMany(
-            Classe::class,
-            'enseignant_matiere_classe',
-            'enseignant_id',
-            'classe_id'
-        )->withPivot('matiere_id')->withTimestamps();
+        return $this->hasMany(Classe::class, 'enseignant_principal_id');
     }
 
-    /**
-     * RELATION : Un enseignant enseigne plusieurs matières
-     */
-    public function matieres()
+    public function matieres(): BelongsToMany
     {
-        return $this->belongsToMany(
-            Matiere::class,
-            'enseignant_matiere_classe',
-            'enseignant_id',
-            'matiere_id'
-        )->withPivot('classe_id')->withTimestamps();
+        return $this->belongsToMany(Matiere::class, 'enseignant_matiere_classe')
+            ->withPivot('classe_id')
+            ->withTimestamps();
     }
 
-    /**
-     * RELATION : Un enseignant peut marquer plusieurs présences
-     */
-    public function presences()
+    public function classes(): BelongsToMany
     {
-        return $this->hasMany(Presence::class);
+        return $this->belongsToMany(Classe::class, 'enseignant_matiere_classe')
+            ->withPivot('matiere_id')
+            ->withTimestamps()
+            ->distinct();
     }
 
-    /**
-     * RELATION : Un enseignant peut saisir plusieurs notes
-     */
-    public function notes()
+    public function notes(): HasMany
     {
         return $this->hasMany(Note::class);
     }
 
-    /**
-     * RELATION : Un enseignant peut avoir plusieurs responsabilités
-     */
-    public function responsabilites()
+    public function presences(): HasMany
+    {
+        return $this->hasMany(Presence::class);
+    }
+
+    public function responsabilites(): HasMany
     {
         return $this->hasMany(Responsabilite::class);
+    }
+
+    public function creneauxHoraires(): HasMany
+    {
+        return $this->hasMany(CreneauHoraire::class);
+    }
+
+    public function nomComplet(): string
+    {
+        return "{$this->prenom} {$this->nom}";
+    }
+
+    public function estProfTitulaire(): bool
+    {
+        return $this->classesPrincipales()->exists();
     }
 }

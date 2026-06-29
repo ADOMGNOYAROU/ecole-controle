@@ -3,61 +3,35 @@
 namespace App\Http\Controllers\Web\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginRequest;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class LoginController extends Controller
 {
-    /**
-     * Afficher le formulaire de connexion
-     */
-    public function showLoginForm()
+    public function show(): View
     {
         return view('auth.login');
     }
 
-    /**
-     * Traiter la tentative de connexion
-     */
-    public function login(Request $request)
+    public function login(LoginRequest $request): RedirectResponse
     {
-        // Log de débogage
-        \Log::info('Tentative de connexion', [
-            'email' => $request->email,
-            'ip' => $request->ip(),
-            'method' => $request->method()
-        ]);
+        $request->authenticate();
 
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
-        ]);
+        $request->session()->regenerate();
 
-        \Log::info('Credentials validés', ['email' => $credentials['email']]);
-
-        if (Auth::attempt($credentials, $request->filled('remember'))) {
-            \Log::info('Authentification réussie', ['user_id' => Auth::id()]);
-            $request->session()->regenerate();
-            return redirect()->intended('dashboard');
-        }
-
-        \Log::warning('Échec de l\'authentification', ['email' => $credentials['email']]);
-
-        return back()->withErrors([
-            'email' => 'Les identifiants fournis ne correspondent pas à nos enregistrements.',
-        ])->onlyInput('email');
+        return redirect()->intended(route('dashboard'));
     }
 
-    /**
-     * Déconnexion de l'utilisateur
-     */
-    public function logout(Request $request)
+    public function logout(Request $request): RedirectResponse
     {
-        Auth::logout();
+        Auth::guard('web')->logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect()->route('login');
     }
 }

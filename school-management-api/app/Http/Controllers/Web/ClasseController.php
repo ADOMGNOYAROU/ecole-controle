@@ -3,95 +3,106 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\ClasseRequest;
+use App\Models\AnneeScolaire;
 use App\Models\Classe;
+use App\Models\Enseignant;
+use App\Services\RapportPdfService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class ClasseController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): View
     {
-        $classes = Classe::withCount('eleves')->paginate(10);
+        $this->authorize('viewAny', Classe::class);
+
+        $classes = Classe::with('anneeScolaire', 'enseignantPrincipal')
+            ->withCount('eleves')
+            ->orderBy('nom')
+            ->paginate(15);
+
         return view('classes.index', compact('classes'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function rapport(RapportPdfService $rapportPdf): Response
     {
-        return view('classes.create');
+        $this->authorize('viewAny', Classe::class);
+
+        $classes = Classe::with('anneeScolaire', 'enseignantPrincipal')->withCount('eleves')->orderBy('nom')->get();
+
+        $lignes = $classes->map(fn (Classe $classe) => [
+            $classe->nom,
+            $classe->niveau ?? '—',
+            $classe->eleves_count,
+            $classe->enseignantPrincipal?->nomComplet() ?? 'Non assigné',
+            $classe->anneeScolaire?->libelle ?? '—',
+        ])->all();
+
+        $pdf = $rapportPdf->listePdf(
+            'Liste des classes',
+            ['Classe', 'Niveau', 'Effectif', 'Enseignant principal', 'Année scolaire'],
+            $lignes,
+        );
+
+        return $pdf->download('rapport-classes-'.now()->format('Y-m-d').'.pdf');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function create(): View
     {
-        $request->validate([
-            'nom' => 'required|string|max:255',
-            'niveau' => 'required|string|max:255',
-            'capacite' => 'required|integer|min:1',
+        $this->authorize('create', Classe::class);
+
+        return view('classes.create', [
+            'anneesScolaires' => AnneeScolaire::orderByDesc('date_debut')->get(),
+            'enseignants' => Enseignant::orderBy('nom')->get(),
         ]);
-
-        Classe::create($request->all());
-
-        return redirect()->route('classes.index')
-            ->with('success', 'Classe créée avec succès.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Classe $classe)
+    public function store(ClasseRequest $request): RedirectResponse
     {
+        $this->authorize('create', Classe::class);
+
+        $classe = Classe::create($request->validated());
+
+        return redirect()->route('classes.show', $classe)->with('success', 'Classe créée avec succès.');
+    }
+
+    public function show(Classe $classe): View
+    {
+        $this->authorize('view', $classe);
+
+        $classe->load(['eleves' => fn ($q) => $q->orderBy('nom'), 'enseignants', 'matieres', 'creneauxHoraires.matiere', 'creneauxHoraires.enseignant']);
+
         return view('classes.show', compact('classe'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Classe $classe)
+    public function edit(Classe $classe): View
     {
-        return view('classes.edit', compact('classe'));
-    }
+        $this->authorize('update', $classe);
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Classe $classe)
-    {
-        $request->validate([
-            'nom' => 'required|string|max:255',
-            'niveau' => 'required|string|max:255',
-            'capacite' => 'required|integer|min:1',
+        return view('classes.edit', [
+            'classe' => $classe,
+            'anneesScolaires' => AnneeScolaire::orderByDesc('date_debut')->get(),
+            'enseignants' => Enseignant::orderBy('nom')->get(),
         ]);
-
-        $classe->update($request->all());
-
-        return redirect()->route('classes.index')
-            ->with('success', 'Classe mise à jour avec succès.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Classe $classe)
+    public function update(ClasseRequest $request, Classe $classe): RedirectResponse
     {
+        $this->authorize('update', $classe);
+
+        $classe->update($request->validated());
+
+        return redirect()->route('classes.show', $classe)->with('success', 'Classe mise à jour.');
+    }
+
+    public function destroy(Classe $classe): RedirectResponse
+    {
+        $this->authorize('delete', $classe);
+
         $classe->delete();
 
-        return redirect()->route('classes.index')
-            ->with('success', 'Classe supprimée avec succès.');
-    }
-
-    /**
-     * Display students of the class.
-     */
-    public function students(Classe $classe)
-    {
-        $students = $classe->eleves()->paginate(10);
-        return view('classes.students', compact('classe', 'students'));
+        return redirect()->route('classes.index')->with('success', 'Classe supprimée.');
     }
 }

@@ -2,90 +2,64 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Note extends Model
 {
-    use HasFactory;
-
-    protected $table = 'notes';
+    use HasFactory, BelongsToEcole;
 
     protected $fillable = [
+        'ecole_id',
         'eleve_id',
         'matiere_id',
-        'classe_id',
-        'type_evaluation',
-        'note',
-        'note_sur',
-        'date_evaluation',
-        'trimestre',
         'enseignant_id',
-        'observation',
+        'classe_id',
+        'trimestre_id',
+        'type',
+        'valeur',
+        'bareme',
+        'coefficient',
+        'date_evaluation',
+        'commentaire',
     ];
 
     protected $casts = [
-        'note' => 'decimal:2',
-        'note_sur' => 'decimal:2',
+        'valeur' => 'decimal:2',
+        'bareme' => 'decimal:2',
+        'coefficient' => 'decimal:2',
         'date_evaluation' => 'date',
-        'trimestre' => 'integer',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
     ];
 
-    /**
-     * RELATION : Une note appartient à un élève
-     */
-    public function eleve()
+    public function eleve(): BelongsTo
     {
         return $this->belongsTo(Eleve::class);
     }
 
-    /**
-     * RELATION : Une note appartient à une matière
-     */
-    public function matiere()
+    public function matiere(): BelongsTo
     {
         return $this->belongsTo(Matiere::class);
     }
 
-    /**
-     * RELATION : Une note appartient à une classe
-     */
-    public function classe()
-    {
-        return $this->belongsTo(Classe::class);
-    }
-
-    /**
-     * RELATION : Une note est saisie par un enseignant
-     */
-    public function enseignant()
+    public function enseignant(): BelongsTo
     {
         return $this->belongsTo(Enseignant::class);
     }
 
-    /**
-     * Calculer la note sur 20
-     */
-    public function getNoteSur20Attribute()
+    public function classe(): BelongsTo
     {
-        return ($this->note / $this->note_sur) * 20;
+        return $this->belongsTo(Classe::class);
     }
 
-    /**
-     * Scope : Filtrer par trimestre
-     */
-    public function scopeByTrimestre($query, $trimestre)
+    public function trimestre(): BelongsTo
     {
-        return $query->where('trimestre', $trimestre);
+        return $this->belongsTo(Trimestre::class);
     }
 
-    /**
-     * Scope : Filtrer par type d'évaluation
-     */
-    public function scopeByType($query, $type)
+    public function noteSur20(): float
     {
-        return $query->where('type_evaluation', $type);
+        return round(($this->valeur / $this->bareme) * 20, 2);
     }
 }

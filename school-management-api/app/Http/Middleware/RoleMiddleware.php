@@ -9,44 +9,23 @@ use Illuminate\Support\Facades\Auth;
 class RoleMiddleware
 {
     /**
-     * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
-     * @param  string  ...$roles
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
+     * @param  string  ...$roles  Comma-separated lists are flattened, e.g. role:admin,enseignant
      */
-    public function handle(Request $request, Closure $next, ...$roles)
+    public function handle(Request $request, Closure $next, string ...$roles)
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return redirect()->route('login');
         }
 
-        $user = Auth::user();
-        
-        // Débogage
-        \Log::info('RoleMiddleware - User role: ' . $user->role);
-        \Log::info('RoleMiddleware - Required roles: ' . implode(', ', $roles));
-        \Log::info('RoleMiddleware - Request URL: ' . $request->fullUrl());
+        $allowedRoles = collect($roles)
+            ->flatMap(fn (string $role) => explode(',', $role))
+            ->map(fn (string $role) => trim($role))
+            ->all();
 
-        // Aplatir tous les rôles requis
-        $allRequiredRoles = [];
-        foreach ($roles as $role) {
-            // Gérer les rôles multiples séparés par des virgules
-            $roleArray = explode(',', $role);
-            foreach ($roleArray as $r) {
-                $allRequiredRoles[] = trim($r);
-            }
-        }
-
-        // Vérifier si le rôle de l'utilisateur est dans la liste des rôles requis
-        if (in_array($user->role, $allRequiredRoles)) {
-            \Log::info('RoleMiddleware - Access granted for role: ' . $user->role);
+        if (in_array(Auth::user()->role, $allowedRoles, true)) {
             return $next($request);
         }
 
-        // Si l'utilisateur n'a aucun des rôles requis
-        \Log::error('RoleMiddleware - Access denied. User role: ' . $user->role . ', Required: ' . implode(', ', $allRequiredRoles));
-        abort(403, 'Accès non autorisé');
+        abort(403, 'Accès non autorisé.');
     }
 }
