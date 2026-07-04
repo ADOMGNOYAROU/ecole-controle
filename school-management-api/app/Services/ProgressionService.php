@@ -146,8 +146,13 @@ class ProgressionService
     }
 
     /**
-     * IDs des élèves en risque basés sur les bulletins (pour affichage en liste).
-     * Combine : dernier trimestre < seuil OU 2 derniers trimestres consécutifs < seuil.
+     * IDs des élèves en risque pour le trimestre courant.
+     *
+     * Stratégie hybride :
+     * - Si un bulletin a été généré → utilise la moyenne du bulletin (pré-calculée, rapide).
+     * - Sinon → calcule directement depuis les notes (fonctionne même sans bulletin généré).
+     *
+     * Un élève est "à risque" si sa moyenne du trimestre courant est < SEUIL_RISQUE.
      */
     public static function idsElevesARisque(): Collection
     {
@@ -156,23 +161,29 @@ class ProgressionService
             return collect();
         }
 
-        $sousSeuil = Bulletin::where('trimestre_id', $trimestre->id)
+        // Élèves qui ont déjà un bulletin généré pour ce trimestre
+        $elevesAvecBulletinIds = Bulletin::where('trimestre_id', $trimestre->id)
+            ->pluck('eleve_id');
+
+        // Parmi eux : ceux dont le bulletin indique une moyenne < seuil
+        $aRisqueViaBulletin = Bulletin::where('trimestre_id', $trimestre->id)
             ->where('moyenne_generale', '<', self::SEUIL_RISQUE)
             ->pluck('eleve_id');
 
-        $trimestrePrecedent = Trimestre::where('annee_scolaire_id', $trimestre->annee_scolaire_id)
-            ->where('ordre', $trimestre->ordre - 1)
-            ->first();
+        // Élèves sans bulletin mais avec des notes saisies → calculer à la volée
+        $aRisqueViaNotes = Eleve::whereHas(
+            'notes',
+            fn ($q) => $q->where('trimestre_id', $trimestre->id)
+        )
+            ->whereNotIn('id', $elevesAvecBulletinIds)
+            ->get()
+            ->filter(function (Eleve $eleve) use ($trimestre) {
+                $moyenne = $eleve->moyenneTrimestre($trimestre->id);
 
-        if ($trimestrePrecedent) {
-            $deuxiemeFois = Bulletin::where('trimestre_id', $trimestrePrecedent->id)
-                ->where('moyenne_generale', '<', self::SEUIL_RISQUE)
-                ->whereIn('eleve_id', $sousSeuil)
-                ->pluck('eleve_id');
+                return $moyenne !== null && $moyenne < self::SEUIL_RISQUE;
+            })
+            ->pluck('id');
 
-            return $sousSeuil->merge($deuxiemeFois)->unique()->values();
-        }
-
-        return $sousSeuil;
+        return $aRisqueViaBulletin->merge($aRisqueViaNotes)->unique()->values();
     }
 }
