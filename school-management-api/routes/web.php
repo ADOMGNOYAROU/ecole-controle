@@ -9,6 +9,7 @@ use App\Http\Controllers\Web\ClasseController;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\EleveController;
 use App\Http\Controllers\Web\EmploiDuTempsController;
+use App\Http\Controllers\Web\ProgressionController;
 use App\Http\Controllers\Web\EnseignantController;
 use App\Http\Controllers\Web\EspaceEleveController;
 use App\Http\Controllers\Web\EspaceParentController;
@@ -82,6 +83,9 @@ Route::middleware('auth')->group(function () {
             Route::post('/annonces', [AnnonceController::class, 'store'])->name('annonces.store');
             Route::get('/annonces/create', [AnnonceController::class, 'create'])->name('annonces.create');
             Route::delete('/annonces/{annonce}', [AnnonceController::class, 'destroy'])->name('annonces.destroy');
+
+            // Progression & risque d'échec (fonctionnalité Premium)
+            Route::get('/eleves/{eleve}/progression', [ProgressionController::class, 'show'])->name('eleves.progression');
 
             // Rapports PDF par section (fonctionnalité Premium)
             Route::get('/classes/rapport', [ClasseController::class, 'rapport'])->name('classes.rapport');

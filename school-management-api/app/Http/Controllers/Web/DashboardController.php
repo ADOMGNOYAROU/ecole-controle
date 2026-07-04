@@ -13,6 +13,7 @@ use App\Models\Note;
 use App\Models\Paiement;
 use App\Models\Presence;
 use App\Models\Trimestre;
+use App\Services\ProgressionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -87,16 +88,23 @@ class DashboardController extends Controller
         $apercuRapide = $this->apercuRapideMensuel();
         $prochainesEcheances = $this->prochainesEcheances();
 
+        $elevesARisque = Eleve::whereIn('id', ProgressionService::idsElevesARisque())
+            ->with('classe')
+            ->orderBy('nom')
+            ->take(6)
+            ->get();
+
         return view('dashboards.admin', [
-            'stats' => $stats,
-            'deltas' => $deltas,
-            'sparklines' => $sparklines,
-            'tauxPresenceGlobal' => $tauxPresenceGlobal,
-            'dernieresNotes' => $dernieresNotes,
-            'annonces' => $annonces,
-            'trimestre' => $trimestre,
-            'apercuRapide' => $apercuRapide,
+            'stats'               => $stats,
+            'deltas'              => $deltas,
+            'sparklines'          => $sparklines,
+            'tauxPresenceGlobal'  => $tauxPresenceGlobal,
+            'dernieresNotes'      => $dernieresNotes,
+            'annonces'            => $annonces,
+            'trimestre'           => $trimestre,
+            'apercuRapide'        => $apercuRapide,
             'prochainesEcheances' => $prochainesEcheances,
+            'elevesARisque'       => $elevesARisque,
         ]);
     }
 

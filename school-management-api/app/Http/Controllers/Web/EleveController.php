@@ -7,6 +7,7 @@ use App\Http\Requests\EleveRequest;
 use App\Models\Classe;
 use App\Models\Eleve;
 use App\Models\Trimestre;
+use App\Services\ProgressionService;
 use App\Services\RapportPdfService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,8 +26,9 @@ class EleveController extends Controller
             ->withQueryString();
 
         return view('eleves.index', [
-            'eleves' => $eleves,
-            'classes' => Classe::orderBy('nom')->get(),
+            'eleves'           => $eleves,
+            'classes'          => Classe::orderBy('nom')->get(),
+            'elevesARisqueIds' => ProgressionService::idsElevesARisque(),
         ]);
     }
 
@@ -88,12 +90,18 @@ class EleveController extends Controller
         $trimestre = Trimestre::actuel();
         $eleve->load(['classe', 'tuteurs']);
 
+        $moyenne = $trimestre ? $eleve->moyenneTrimestre($trimestre->id) : null;
+
+        // Détection rapide du risque sans calcul complet de la progression
+        $enRisque = $moyenne !== null && $moyenne < ProgressionService::SEUIL_RISQUE;
+
         return view('eleves.show', [
-            'eleve' => $eleve,
-            'trimestre' => $trimestre,
-            'moyenne' => $trimestre ? $eleve->moyenneTrimestre($trimestre->id) : null,
-            'tauxPresence' => $trimestre ? $eleve->tauxPresenceTrimestre($trimestre->id) : null,
+            'eleve'          => $eleve,
+            'trimestre'      => $trimestre,
+            'moyenne'        => $moyenne,
+            'tauxPresence'   => $trimestre ? $eleve->tauxPresenceTrimestre($trimestre->id) : null,
             'dernieresNotes' => $eleve->notes()->with('matiere')->latest()->take(10)->get(),
+            'enRisque'       => $enRisque,
         ]);
     }
 

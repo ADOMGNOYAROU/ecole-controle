@@ -46,6 +46,9 @@
                     <td>{{ $eleve->classe?->nom ?? '—' }}</td>
                     <td><span class="badge-{{ $eleve->statut === 'actif' ? 'green' : 'slate' }}">{{ $eleve->statut }}</span></td>
                     <td class="text-right space-x-1.5 whitespace-nowrap">
+                        @if($elevesARisqueIds->contains($eleve->id))
+                            <span class="badge-red">⚠ À risque</span>
+                        @endif
                         <x-action-link :href="route('eleves.show', $eleve)" type="view">Voir</x-action-link>
                         @can('update', $eleve)
                             <x-action-link :href="route('eleves.edit', $eleve)" type="edit">Modifier</x-action-link>

@@ -162,6 +162,48 @@
     </div>
 </div>
 
+@if($elevesARisque->isNotEmpty())
+<div class="mt-6">
+    <div class="card overflow-hidden">
+        <div class="p-5 pb-0 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-red-600">
+                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                </span>
+                <h2 class="font-semibold text-slate-900">Élèves à risque d'échec</h2>
+            </div>
+            <span class="badge-red">{{ $elevesARisque->count() }} élève(s)</span>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>Élève</th><th>Classe</th><th></th></tr></thead>
+            <tbody>
+                @foreach($elevesARisque as $eleveRisque)
+                    <tr>
+                        <td>
+                            <div class="flex items-center gap-3">
+                                <x-avatar :name="$eleveRisque->nomComplet()" />
+                                <span class="font-medium text-slate-900">{{ $eleveRisque->nomComplet() }}</span>
+                            </div>
+                        </td>
+                        <td class="text-slate-500">{{ $eleveRisque->classe?->nom ?? '—' }}</td>
+                        <td class="text-right space-x-1.5">
+                            <x-action-link :href="route('eleves.progression', $eleveRisque)" type="view">Progression</x-action-link>
+                            <x-action-link :href="route('eleves.show', $eleveRisque)" type="edit">Fiche</x-action-link>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+        <div class="p-4 text-center">
+            <a href="{{ route('eleves.index') }}" class="inline-flex items-center gap-1 text-sm font-medium text-brand-600 hover:underline">
+                Voir tous les élèves
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+    </div>
+</div>
+@endif
+
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
