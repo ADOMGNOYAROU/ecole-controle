@@ -16,6 +16,9 @@ import { ElevesModule } from './eleves/eleves.module';
 import { CreneauxHorairesModule } from './creneaux-horaires/creneaux-horaires.module';
 import { NotesModule } from './notes/notes.module';
 import { PresencesModule } from './presences/presences.module';
+import { PdfModule } from './pdf/pdf.module';
+import { BulletinsModule } from './bulletins/bulletins.module';
+import { ProgressionModule } from './progression/progression.module';
 
 @Module({
   imports: [
@@ -34,6 +37,9 @@ import { PresencesModule } from './presences/presences.module';
     CreneauxHorairesModule,
     NotesModule,
     PresencesModule,
+    PdfModule,
+    BulletinsModule,
+    ProgressionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

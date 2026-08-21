@@ -3,6 +3,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../environments/environment';
 import { crudApi, messageErreur } from '../../core/crud';
+import { telechargerPdf } from '../../core/telecharger-pdf';
 
 interface Eleve {
   id: string;
@@ -32,7 +33,10 @@ interface Tuteur {
   imports: [FormsModule],
   template: `
     <div class="p-8">
-      <h1 class="mb-6 text-xl font-semibold text-slate-900">Parents / Tuteurs</h1>
+      <div class="mb-6 flex items-center justify-between">
+        <h1 class="text-xl font-semibold text-slate-900">Parents / Tuteurs</h1>
+        <button (click)="telechargerRapport()" class="btn-ghost">Télécharger le rapport PDF</button>
+      </div>
 
       <form
         (ngSubmit)="valider()"
@@ -248,5 +252,9 @@ export class TuteursPage {
     if (!confirm(`Supprimer ${item.prenom} ${item.nom} ?`)) return;
     await this.api.supprimer(item.id);
     await this.charger();
+  }
+
+  async telechargerRapport(): Promise<void> {
+    await telechargerPdf(this.http, `${environment.apiUrl}/tuteurs/rapport`, 'rapport-tuteurs.pdf');
   }
 }

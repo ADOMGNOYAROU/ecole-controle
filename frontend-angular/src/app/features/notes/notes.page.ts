@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { crudApi, messageErreur } from '../../core/crud';
+import { telechargerPdf } from '../../core/telecharger-pdf';
 
 interface Classe {
   id: string;
@@ -38,7 +39,12 @@ interface Note {
   imports: [FormsModule],
   template: `
     <div class="p-8">
-      <h1 class="mb-6 text-xl font-semibold text-slate-900">Saisie des notes</h1>
+      <div class="mb-6 flex items-center justify-between">
+        <h1 class="text-xl font-semibold text-slate-900">Saisie des notes</h1>
+        <button (click)="telechargerRapport()" [disabled]="!peutCharger()" class="btn-ghost">
+          Télécharger le rapport PDF
+        </button>
+      </div>
 
       <div class="mb-6 grid grid-cols-1 gap-4 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:grid-cols-6">
         <div>
@@ -274,5 +280,14 @@ export class NotesPage {
     if (!confirm('Supprimer cette note ?')) return;
     await this.notesApi.supprimer(note.id);
     await this.chargerContexte();
+  }
+
+  async telechargerRapport(): Promise<void> {
+    const params = new URLSearchParams({
+      classeId: this.classeId,
+      matiereId: this.matiereId,
+      trimestreId: this.trimestreId,
+    });
+    await telechargerPdf(this.http, `${environment.apiUrl}/notes/rapport?${params.toString()}`, 'rapport-notes.pdf');
   }
 }

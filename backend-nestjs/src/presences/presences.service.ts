@@ -171,6 +171,58 @@ export class PresencesService {
     await ref.delete();
   }
 
+  async pourRapport(
+    ecoleId: string,
+    user: AuthenticatedUser,
+    filtres: PresenceFiltres,
+  ): Promise<string[][]> {
+    const presences = (await this.lister(ecoleId, user, filtres)) as Record<
+      string,
+      unknown
+    >[];
+    const cacheNoms = new Map<string, string>();
+
+    const nomDe = async (
+      collection: string,
+      id: string,
+      champs: (data: Record<string, unknown>) => string,
+    ) => {
+      const cle = `${collection}:${id}`;
+      if (!cacheNoms.has(cle)) {
+        const snap = await ecoleCollection(this.db, ecoleId, collection)
+          .doc(id)
+          .get();
+        cacheNoms.set(cle, snap.exists ? champs(snap.data()!) : '—');
+      }
+      return cacheNoms.get(cle)!;
+    };
+
+    const lignes: string[][] = [];
+    for (const presence of presences) {
+      const eleveNom = await nomDe(
+        'eleves',
+        presence['eleveId'] as string,
+        (d) => `${d['prenom'] as string} ${d['nom'] as string}`,
+      );
+      const classeNom = await nomDe(
+        'classes',
+        presence['classeId'] as string,
+        (d) => d['nom'] as string,
+      );
+      const statut = presence['statut'] as string;
+
+      lignes.push([
+        eleveNom,
+        classeNom,
+        presence['date'] as string,
+        statut.charAt(0).toUpperCase() + statut.slice(1),
+        (presence['motif'] as string | null) ?? '—',
+      ]);
+    }
+
+    return lignes;
+  }
+
   private async verifierProprietaire(
     ecoleId: string,
     user: AuthenticatedUser,

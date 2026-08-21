@@ -67,6 +67,42 @@ export class ElevesService {
     await ref.delete();
   }
 
+  async pourRapport(ecoleId: string): Promise<string[][]> {
+    const elevesSnap = await ecoleCollection(this.db, ecoleId, 'eleves')
+      .orderBy('nom')
+      .get();
+    const classesCache = new Map<string, string>();
+
+    const lignes: string[][] = [];
+    for (const doc of elevesSnap.docs) {
+      const eleve = doc.data();
+      const classeId = eleve['classeId'] as string | null;
+      let classeNom = 'Sans classe';
+      if (classeId) {
+        if (!classesCache.has(classeId)) {
+          const classeSnap = await ecoleCollection(this.db, ecoleId, 'classes')
+            .doc(classeId)
+            .get();
+          classesCache.set(
+            classeId,
+            (classeSnap.data()?.['nom'] as string | undefined) ?? '—',
+          );
+        }
+        classeNom = classesCache.get(classeId)!;
+      }
+
+      lignes.push([
+        eleve['matricule'] as string,
+        `${eleve['prenom']} ${eleve['nom']}`,
+        classeNom,
+        eleve['sexe'] === 'M' ? 'Masculin' : 'Féminin',
+        eleve['statut'] as string,
+      ]);
+    }
+
+    return lignes;
+  }
+
   private versDocument(dto: EleveDto) {
     return {
       matricule: dto.matricule,

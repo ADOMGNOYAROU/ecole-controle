@@ -72,6 +72,14 @@ export const routes: Routes = [
             path: 'presences',
             loadComponent: () => import('./features/presences/presences.page').then((m) => m.PresencesPage),
           },
+          {
+            path: 'bulletins',
+            loadComponent: () => import('./features/bulletins/bulletins.page').then((m) => m.BulletinsPage),
+          },
+          {
+            path: 'progression',
+            loadComponent: () => import('./features/progression/progression.page').then((m) => m.ProgressionPage),
+          },
         ],
       },
     ],

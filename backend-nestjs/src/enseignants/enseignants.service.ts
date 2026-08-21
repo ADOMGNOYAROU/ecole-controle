@@ -62,4 +62,35 @@ export class EnseignantsService {
     await getDocOrThrow(ref, 'Enseignant introuvable.');
     await ref.delete();
   }
+
+  async pourRapport(ecoleId: string): Promise<string[][]> {
+    const enseignantsSnap = await ecoleCollection(
+      this.db,
+      ecoleId,
+      'enseignants',
+    )
+      .orderBy('nom')
+      .get();
+    const lignes: string[][] = [];
+
+    for (const doc of enseignantsSnap.docs) {
+      const enseignant = doc.data();
+      const classesPrincipalesSnap = await ecoleCollection(
+        this.db,
+        ecoleId,
+        'classes',
+      )
+        .where('enseignantPrincipalId', '==', doc.id)
+        .get();
+
+      lignes.push([
+        `${enseignant['prenom']} ${enseignant['nom']}`,
+        (enseignant['specialite'] as string | null) ?? '—',
+        (enseignant['telephone'] as string | null) ?? '—',
+        String(classesPrincipalesSnap.size),
+      ]);
+    }
+
+    return lignes;
+  }
 }

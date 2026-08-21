@@ -111,6 +111,22 @@ export class TuteursService {
     await batch.commit();
   }
 
+  async pourRapport(ecoleId: string): Promise<string[][]> {
+    const snap = await ecoleCollection(this.db, ecoleId, 'tuteurs')
+      .orderBy('nom')
+      .get();
+    return snap.docs.map((doc) => {
+      const tuteur = doc.data();
+      const eleves = (tuteur['eleves'] as { id: string }[] | undefined) ?? [];
+      return [
+        `${tuteur['prenom']} ${tuteur['nom']}`,
+        tuteur['telephone'] as string,
+        (tuteur['email'] as string | null) ?? '—',
+        String(eleves.length),
+      ];
+    });
+  }
+
   private versEleves(
     eleves: { id: string; lienParente: string }[],
   ): { id: string; lienParente: string }[] {

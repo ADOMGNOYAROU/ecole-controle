@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { crudApi, messageErreur } from '../../core/crud';
+import { telechargerPdf } from '../../core/telecharger-pdf';
 
 interface Classe {
   id: string;
@@ -31,7 +32,12 @@ type Statut = 'present' | 'absent' | 'retard';
   imports: [FormsModule],
   template: `
     <div class="p-8">
-      <h1 class="mb-6 text-xl font-semibold text-slate-900">Appel</h1>
+      <div class="mb-6 flex items-center justify-between">
+        <h1 class="text-xl font-semibold text-slate-900">Appel</h1>
+        <button (click)="telechargerRapport()" [disabled]="!classeId" class="btn-ghost">
+          Télécharger le rapport PDF
+        </button>
+      </div>
 
       <div class="mb-6 grid grid-cols-1 gap-4 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:grid-cols-4">
         <div>
@@ -212,5 +218,14 @@ export class PresencesPage {
     if (!confirm('Supprimer cette présence ?')) return;
     await this.presencesApi.supprimer(presence.id);
     await this.chargerExistantes();
+  }
+
+  async telechargerRapport(): Promise<void> {
+    const params = new URLSearchParams({ classeId: this.classeId, date: this.date });
+    await telechargerPdf(
+      this.http,
+      `${environment.apiUrl}/presences/rapport?${params.toString()}`,
+      'rapport-presences.pdf',
+    );
   }
 }

@@ -50,6 +50,20 @@ export class MatieresService {
     await ref.delete();
   }
 
+  async pourRapport(ecoleId: string): Promise<string[][]> {
+    const snap = await ecoleCollection(this.db, ecoleId, 'matieres')
+      .orderBy('nom')
+      .get();
+    return snap.docs.map((doc) => {
+      const matiere = doc.data();
+      return [
+        matiere['nom'] as string,
+        (matiere['code'] as string | null) ?? '—',
+        String(matiere['coefficientDefaut']),
+      ];
+    });
+  }
+
   private async verifierCodeUnique(
     ecoleId: string,
     code: string,

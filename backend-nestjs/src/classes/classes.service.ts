@@ -54,6 +54,52 @@ export class ClassesService {
     await ref.delete();
   }
 
+  async pourRapport(ecoleId: string): Promise<string[][]> {
+    const classesSnap = await ecoleCollection(
+      this.db,
+      ecoleId,
+      'classes',
+    ).get();
+    const lignes: string[][] = [];
+
+    for (const doc of classesSnap.docs) {
+      const classe = doc.data();
+      const effectifSnap = await ecoleCollection(this.db, ecoleId, 'eleves')
+        .where('classeId', '==', doc.id)
+        .get();
+
+      let enseignantNom = 'Non assigné';
+      const enseignantPrincipalId = classe['enseignantPrincipalId'] as
+        string | null;
+      if (enseignantPrincipalId) {
+        const eSnap = await ecoleCollection(this.db, ecoleId, 'enseignants')
+          .doc(enseignantPrincipalId)
+          .get();
+        if (eSnap.exists)
+          enseignantNom = `${eSnap.data()!['prenom']} ${eSnap.data()!['nom']}`;
+      }
+
+      let anneeLibelle = '—';
+      const anneeScolaireId = classe['anneeScolaireId'] as string | null;
+      if (anneeScolaireId) {
+        const aSnap = await ecoleCollection(this.db, ecoleId, 'anneesScolaires')
+          .doc(anneeScolaireId)
+          .get();
+        if (aSnap.exists) anneeLibelle = aSnap.data()!['libelle'] as string;
+      }
+
+      lignes.push([
+        classe['nom'] as string,
+        (classe['niveau'] as string | null) ?? '—',
+        String(effectifSnap.size),
+        enseignantNom,
+        anneeLibelle,
+      ]);
+    }
+
+    return lignes.sort((a, b) => a[0].localeCompare(b[0]));
+  }
+
   private async verifierReferences(
     ecoleId: string,
     dto: ClasseDto,

@@ -202,6 +202,67 @@ export class NotesService {
     await ref.delete();
   }
 
+  async pourRapport(
+    ecoleId: string,
+    user: AuthenticatedUser,
+    filtres: NoteFiltres,
+  ): Promise<string[][]> {
+    const notes = (await this.lister(ecoleId, user, filtres)) as Record<
+      string,
+      unknown
+    >[];
+    const cacheNoms = new Map<string, string>();
+
+    const nomDe = async (
+      collection: string,
+      id: string,
+      champs: (data: Record<string, unknown>) => string,
+    ) => {
+      const cle = `${collection}:${id}`;
+      if (!cacheNoms.has(cle)) {
+        const snap = await ecoleCollection(this.db, ecoleId, collection)
+          .doc(id)
+          .get();
+        cacheNoms.set(cle, snap.exists ? champs(snap.data()!) : '—');
+      }
+      return cacheNoms.get(cle)!;
+    };
+
+    const lignes: string[][] = [];
+    for (const note of notes) {
+      const eleveNom = await nomDe(
+        'eleves',
+        note['eleveId'] as string,
+        (d) => `${d['prenom'] as string} ${d['nom'] as string}`,
+      );
+      const matiereNom = await nomDe(
+        'matieres',
+        note['matiereId'] as string,
+        (d) => d['nom'] as string,
+      );
+      const classeNom = await nomDe(
+        'classes',
+        note['classeId'] as string,
+        (d) => d['nom'] as string,
+      );
+      const noteSur20 =
+        Math.round(
+          ((note['valeur'] as number) / (note['bareme'] as number)) * 20 * 100,
+        ) / 100;
+
+      lignes.push([
+        eleveNom,
+        matiereNom,
+        classeNom,
+        note['type'] as string,
+        `${noteSur20}/20`,
+        note['dateEvaluation'] as string,
+      ]);
+    }
+
+    return lignes;
+  }
+
   private async resoudreEnseignantId(
     ecoleId: string,
     user: AuthenticatedUser,
