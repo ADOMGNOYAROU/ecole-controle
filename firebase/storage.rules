@@ -1,0 +1,12 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Tous les fichiers (bulletins PDF, rapports, pièces jointes) sont
+    // générés et servis par le backend NestJS (Admin SDK, hors règles).
+    // Aucun accès direct au Storage depuis le client pour l'instant.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

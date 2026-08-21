@@ -16,6 +16,9 @@ yarn-error.log
 # Node
 /node_modules/
 
+# Secrets (Firebase service account keys, etc.)
+/secrets/
+
 # IDEs and editors
 .idea
 .vscode

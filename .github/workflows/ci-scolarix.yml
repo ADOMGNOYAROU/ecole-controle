@@ -1,0 +1,48 @@
+name: CI Scolarix
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'backend-nestjs/**'
+      - 'frontend-angular/**'
+      - '.github/workflows/ci-scolarix.yml'
+  pull_request:
+    paths:
+      - 'backend-nestjs/**'
+      - 'frontend-angular/**'
+      - '.github/workflows/ci-scolarix.yml'
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend-nestjs
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend-nestjs/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test -- --passWithNoTests
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend-angular
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend-angular/package-lock.json
+      - run: npm ci
+      - run: npx ng build
+      - run: npx ng test

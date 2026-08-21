@@ -1,0 +1,53 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function role() {
+      return request.auth.token.role;
+    }
+
+    function ecoleId() {
+      return request.auth.token.ecoleId;
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn() && role() == 'super_admin';
+    }
+
+    function appartientAEcole(id) {
+      return isSignedIn() && ecoleId() == id;
+    }
+
+    // Profils utilisateurs : chacun lit le sien, super-admin lit tout.
+    // Écriture réservée au backend NestJS (Admin SDK), jamais depuis le client.
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isSuperAdmin());
+      allow write: if false;
+    }
+
+    // École (tenant) : lecture réservée aux membres de l'école ou au super-admin.
+    match /ecoles/{ecoleId} {
+      allow read: if isSuperAdmin() || appartientAEcole(ecoleId);
+      allow write: if false;
+    }
+
+    // Tout ce qui vit sous une école : même règle de lecture par défaut.
+    // Écriture fermée par défaut ; sera ouverte explicitement, phase par
+    // phase, aux seules sous-collections qui ont besoin d'accès client
+    // temps réel (ex. messagerie en Phase 6), jamais au CRUD classique.
+    match /ecoles/{ecoleId}/{document=**} {
+      allow read: if isSuperAdmin() || appartientAEcole(ecoleId);
+      allow write: if false;
+    }
+
+    // Tout le reste : fermé.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
