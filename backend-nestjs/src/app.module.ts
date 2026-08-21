@@ -13,6 +13,9 @@ import { MatieresModule } from './matieres/matieres.module';
 import { TuteursModule } from './tuteurs/tuteurs.module';
 import { EnseignantsModule } from './enseignants/enseignants.module';
 import { ElevesModule } from './eleves/eleves.module';
+import { CreneauxHorairesModule } from './creneaux-horaires/creneaux-horaires.module';
+import { NotesModule } from './notes/notes.module';
+import { PresencesModule } from './presences/presences.module';
 
 @Module({
   imports: [
@@ -28,6 +31,9 @@ import { ElevesModule } from './eleves/eleves.module';
     TuteursModule,
     EnseignantsModule,
     ElevesModule,
+    CreneauxHorairesModule,
+    NotesModule,
+    PresencesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

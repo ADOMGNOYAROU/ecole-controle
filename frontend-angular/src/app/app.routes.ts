@@ -55,6 +55,25 @@ export const routes: Routes = [
           },
         ],
       },
+      {
+        path: '',
+        canActivate: [roleGuard(['admin', 'enseignant'])],
+        children: [
+          {
+            path: 'emploi-du-temps',
+            loadComponent: () =>
+              import('./features/emploi-du-temps/emploi-du-temps.page').then((m) => m.EmploiDuTempsPage),
+          },
+          {
+            path: 'notes',
+            loadComponent: () => import('./features/notes/notes.page').then((m) => m.NotesPage),
+          },
+          {
+            path: 'presences',
+            loadComponent: () => import('./features/presences/presences.page').then((m) => m.PresencesPage),
+          },
+        ],
+      },
     ],
   },
 ];

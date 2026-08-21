@@ -23,6 +23,11 @@ import { AuthService } from '../core/auth.service';
         <nav class="flex-1 space-y-0.5">
           <a routerLink="/dashboard" routerLinkActive="nav-active" class="nav-link">Tableau de bord</a>
 
+          <p class="px-3 pt-4 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Vie scolaire</p>
+          <a routerLink="/emploi-du-temps" routerLinkActive="nav-active" class="nav-link">Emploi du temps</a>
+          <a routerLink="/notes" routerLinkActive="nav-active" class="nav-link">Notes</a>
+          <a routerLink="/presences" routerLinkActive="nav-active" class="nav-link">Présences</a>
+
           <p class="px-3 pt-4 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Référentiel</p>
           <a routerLink="/annees-scolaires" routerLinkActive="nav-active" class="nav-link">Années scolaires</a>
           <a routerLink="/trimestres" routerLinkActive="nav-active" class="nav-link">Trimestres</a>
