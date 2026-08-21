@@ -1,5 +1,6 @@
 export const environment = {
   production: true,
+  apiUrl: 'https://api.scolarix.exemple.com',
   firebase: {
     apiKey: 'AIzaSyB63NIBkBuYCBgQud-pIr1gN-k0JpY0M1w',
     authDomain: 'scolarix-447f2.firebaseapp.com',

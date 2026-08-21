@@ -1,6 +1,13 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { cert, getApp, getApps, initializeApp, type App } from 'firebase-admin/app';
+import {
+  cert,
+  getApp,
+  getApps,
+  initializeApp,
+  type App,
+  type ServiceAccount,
+} from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { readFileSync } from 'fs';
@@ -23,7 +30,9 @@ import { FIREBASE_APP, FIREBASE_AUTH, FIRESTORE } from './firebase.constants';
           process.cwd(),
           config.getOrThrow<string>('FIREBASE_SERVICE_ACCOUNT_PATH'),
         );
-        const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf-8'));
+        const serviceAccount = JSON.parse(
+          readFileSync(serviceAccountPath, 'utf-8'),
+        ) as ServiceAccount;
 
         return initializeApp({
           credential: cert(serviceAccount),
