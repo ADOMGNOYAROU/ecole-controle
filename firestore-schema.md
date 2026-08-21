@@ -6,6 +6,7 @@ Ce document est mis à jour à chaque phase de la migration (voir `CAHIER_DES_CH
 ## Principe général
 
 - **Isolation multi-tenant par sous-collections.** Chaque école est un document dans `/ecoles/{ecoleId}`, et toutes ses données (élèves, classes, notes, ...) vivent dans des sous-collections en dessous. Ça donne une isolation naturelle et des règles de sécurité simples.
+- **Un seul niveau de sous-collection sous chaque école** (pas de nesting en cascade). Les relations (ex. trimestre → année scolaire, élève → classe) passent par un champ `xxxId` plutôt que par l'emplacement du document. Ça évite les *collection group queries* (qui demandent des index composites spécifiques) et se rapproche du modèle relationnel d'origine.
 - **Accès cross-tenant (super-admin)** via *collection group queries* (ex. `collectionGroup('factures')`) plutôt que des collections top-level, pour ne pas casser l'isolation par école.
 - **Écritures via le backend NestJS** (SDK Admin, qui contourne les règles) pour tout le CRUD classique. Les règles Firestore ci-dessous sont donc une isolation de secours + les quelques accès directs qu'on ouvre volontairement (temps réel).
 - **Documents dénormalisés pour les calculs lourds** (bulletins, risque d'échec) : Firestore ne fait pas de jointures ni d'agrégations complexes côté serveur, donc ces documents sont pré-calculés par des Cloud Functions plutôt que recalculés à la volée.
@@ -44,12 +45,12 @@ createdAt: timestamp
 | Sous-collection | Rôle | Champs clés |
 |---|---|---|
 | `anneesScolaires/{id}` | Années scolaires | `libelle, dateDebut, dateFin, active` |
-| `anneesScolaires/{id}/trimestres/{id}` | Trimestres | `libelle, dateDebut, dateFin, ordre` |
+| `trimestres/{id}` | Trimestres | `anneeScolaireId, nom, ordre, dateDebut, dateFin` |
 | `classes/{id}` | Classes | `nom, niveau, anneeScolaireId, enseignantPrincipalId` |
 | `matieres/{id}` | Matières | `nom, coefficient` |
-| `eleves/{id}` | Élèves | `nom, prenom, dateNaissance, classeId, tuteurIds[], userId, statut` |
-| `enseignants/{id}` | Enseignants | `nom, prenom, userId, matiereIds[]` |
-| `tuteurs/{id}` | Parents/tuteurs | `nom, prenom, telephone, userId, eleveIds[]` |
+| `eleves/{id}` | Élèves | `matricule, nom, prenom, sexe, dateNaissance, classeId, statut, tuteurIds[], userId` |
+| `enseignants/{id}` | Enseignants | `nom, prenom, telephone, email, specialite, userId, matiereIds[], classeIds[]` |
+| `tuteurs/{id}` | Parents/tuteurs | `nom, prenom, telephone, email, userId, eleves[] ({eleveId, lienParente})` |
 | `emploiDuTemps/{id}` | Créneaux horaires | `classeId, matiereId, enseignantId, jour, heureDebut, heureFin` |
 | `notes/{id}` | Notes | `eleveId, matiereId, classeId, trimestreId, valeur, coefficient, type, saisiParId, createdAt` |
 | `presences/{id}` | Présences | `eleveId, classeId, date, statut, justifie, saisiParId` |

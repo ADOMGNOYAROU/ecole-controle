@@ -50,6 +50,7 @@ export class EcolesService {
     trialEndsAt.setDate(trialEndsAt.getDate() + DUREE_ESSAI_JOURS);
 
     const anneeRef = ecoleRef.collection('anneesScolaires').doc();
+    const trimestreRef = ecoleRef.collection('trimestres').doc();
     const trimestreDebut = new Date(maintenant);
     const trimestreFin = new Date(maintenant);
     trimestreFin.setMonth(trimestreFin.getMonth() + 3);
@@ -85,7 +86,8 @@ export class EcolesService {
       active: true,
     });
 
-    batch.set(anneeRef.collection('trimestres').doc(), {
+    batch.set(trimestreRef, {
+      anneeScolaireId: anneeRef.id,
       nom: '1er trimestre',
       ordre: 1,
       dateDebut: trimestreDebut,
