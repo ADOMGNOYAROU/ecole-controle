@@ -53,6 +53,10 @@ export const routes: Routes = [
             path: 'eleves',
             loadComponent: () => import('./features/eleves/eleves.page').then((m) => m.ElevesPage),
           },
+          {
+            path: 'paiements',
+            loadComponent: () => import('./features/paiements/paiements.page').then((m) => m.PaiementsPage),
+          },
         ],
       },
       {

@@ -46,23 +46,29 @@ createdAt: timestamp
 |---|---|---|
 | `anneesScolaires/{id}` | Années scolaires | `libelle, dateDebut, dateFin, active` |
 | `trimestres/{id}` | Trimestres | `anneeScolaireId, nom, ordre, dateDebut, dateFin` |
-| `classes/{id}` | Classes | `nom, niveau, anneeScolaireId, enseignantPrincipalId` |
-| `matieres/{id}` | Matières | `nom, coefficient` |
-| `eleves/{id}` | Élèves | `matricule, nom, prenom, sexe, dateNaissance, classeId, statut, tuteurIds[], userId` |
-| `enseignants/{id}` | Enseignants | `nom, prenom, telephone, email, specialite, userId, matiereIds[], classeIds[]` |
-| `tuteurs/{id}` | Parents/tuteurs | `nom, prenom, telephone, email, userId, eleves[] ({eleveId, lienParente})` |
-| `emploiDuTemps/{id}` | Créneaux horaires | `classeId, matiereId, enseignantId, jour, heureDebut, heureFin` |
-| `notes/{id}` | Notes | `eleveId, matiereId, classeId, trimestreId, valeur, coefficient, type, saisiParId, createdAt` |
-| `presences/{id}` | Présences | `eleveId, classeId, date, statut, justifie, saisiParId` |
-| `bulletins/{id}` | Bulletins (générés) | `eleveId, trimestreId, classeId, moyenneGenerale, rang, appreciations, pdfUrl, genereLe` |
-| `paiements/{id}` | Paiements | `eleveId, montant, montantPaye, dateEcheance, statut, dernierRappelLe` |
+| `classes/{id}` | Classes | `nom, niveau, anneeScolaireId, enseignantPrincipalId, capacite` |
+| `matieres/{id}` | Matières | `nom, code, coefficientDefaut` |
+| `eleves/{id}` | Élèves | `matricule, nom, prenom, sexe, dateNaissance, classeId, statut, dateInscription, tuteurIds[], userId` |
+| `enseignants/{id}` | Enseignants | `nom, prenom, telephone, email, specialite, dateEmbauche, userId, matiereIds[], classeIds[]` |
+| `tuteurs/{id}` | Parents/tuteurs | `nom, prenom, telephone, email, profession, adresse, userId, eleves[] ({id, lienParente})` |
+| `creneauxHoraires/{id}` | Emploi du temps | `classeId, matiereId, enseignantId, jourSemaine, heureDebut, heureFin, salle` |
+| `notes/{id}` | Notes | `eleveId, matiereId, classeId, trimestreId, enseignantId, type, valeur, bareme, coefficient, dateEvaluation, commentaire`. ID déterministe pour la saisie en masse (`classeId_matiereId_trimestreId_type_date_eleveId`), auto-généré pour la saisie unitaire. |
+| `presences/{id}` | Présences | `eleveId, classeId, enseignantId, trimestreId, date, statut, motif`. ID déterministe `eleveId_date` (upsert, un seul statut par élève et par jour). |
+| `bulletins/{id}` | Bulletins (instantanés) | `eleveId, classeId, trimestreId, moyenneGenerale, rang, appreciation, tauxPresence, matieresDetail[], genereLe`. ID déterministe `eleveId_trimestreId` ; le PDF est régénéré à la demande depuis cet instantané (pas de fichier stocké). |
+| `paiements/{id}` | Paiements | `eleveId, anneeScolaireId, type, montant, montantPaye, dateEcheance, datePaiement, statut, commentaire, dernierRappelLe` |
+| `notifications/{id}` | Notifications | `utilisateurId, titre, message, type, lu, creeLe` |
 | `messages/{id}` | Messagerie | `participants[], texte, envoyeParId, envoyeLe, lu` |
 | `annonces/{id}` | Annonces | `titre, contenu, cibleRoles[], publieParId, publieLe` |
-| `notifications/{id}` | Notifications | `utilisateurId, titre, message, lu, creeLe` |
-| `progressions/{eleveId}` | Risque d'échec (calculé) | `score, facteurs[], dernierCalculLe` |
+| `abonnements/{id}` | Historique d'abonnement | `statut, dateDebut, dateFin, montant` |
 | `factures/{id}` | Facturation abonnement | `montant, statut, periode, dateEmission, dateConfirmation` |
+
+Le risque d'échec (`/eleves/{id}/progression`) n'est **pas persisté** : il est recalculé à la demande à partir de `notes` et `bulletins` (voir `ProgressionService`), pour rester toujours à jour sans job de synchronisation séparé.
 
 ## Statut
 
-- [x] Schéma initial rédigé (Phase 0)
-- [ ] Affiné à chaque phase avec les cas réels rencontrés à l'implémentation
+- [x] Phase 0-1 : fondations, auth, écoles/comptes
+- [x] Phase 2 : référentiel académique (années, trimestres, classes, matières, enseignants, tuteurs, élèves)
+- [x] Phase 3 : emploi du temps, notes, présences
+- [x] Phase 4 : bulletins, risque d'échec, rapports PDF
+- [x] Phase 5 : paiements, relances automatiques (cron + déclenchement manuel), notifications
+- [ ] Phase 6+ : messagerie, annonces, espaces élève/parent, abonnement, super-admin

@@ -38,6 +38,7 @@ import { AuthService } from '../core/auth.service';
           <a routerLink="/enseignants" routerLinkActive="nav-active" class="nav-link">Enseignants</a>
           <a routerLink="/tuteurs" routerLinkActive="nav-active" class="nav-link">Parents / Tuteurs</a>
           <a routerLink="/eleves" routerLinkActive="nav-active" class="nav-link">Élèves</a>
+          <a routerLink="/paiements" routerLinkActive="nav-active" class="nav-link">Paiements</a>
         </nav>
 
         <button

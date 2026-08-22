@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { FirebaseModule } from './firebase/firebase.module';
@@ -19,10 +20,13 @@ import { PresencesModule } from './presences/presences.module';
 import { PdfModule } from './pdf/pdf.module';
 import { BulletinsModule } from './bulletins/bulletins.module';
 import { ProgressionModule } from './progression/progression.module';
+import { MailModule } from './mail/mail.module';
+import { PaiementsModule } from './paiements/paiements.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     FirebaseModule,
     AuthModule,
     EcolesModule,
@@ -40,6 +44,8 @@ import { ProgressionModule } from './progression/progression.module';
     PdfModule,
     BulletinsModule,
     ProgressionModule,
+    MailModule,
+    PaiementsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

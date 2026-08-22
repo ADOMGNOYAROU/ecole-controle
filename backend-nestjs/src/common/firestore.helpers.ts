@@ -4,6 +4,7 @@ import type {
   DocumentReference,
   Firestore,
 } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 
 export function ecoleCollection(
   db: Firestore,
@@ -76,4 +77,41 @@ export async function trouverTrimestreActuelId(
       ((a.data()['ordre'] as number | undefined) ?? 0),
   );
   return parOrdreDesc[0]?.id ?? null;
+}
+
+function versDate(valeur: unknown): Date | undefined {
+  return valeur instanceof Timestamp ? valeur.toDate() : undefined;
+}
+
+// Reproduit Ecole::aAccesPremium() de l'app Laravel d'origine. Partagé
+// entre PremiumGuard et la tâche de relances de paiement.
+export async function ecoleAAccesPremium(
+  db: Firestore,
+  ecoleId: string,
+  ecole: FirebaseFirestore.DocumentData,
+): Promise<boolean> {
+  if (ecole['statut'] === 'suspendu') return false;
+  if (ecole['plan'] !== 'premium') return false;
+
+  const trialEndsAt = versDate(ecole['trialEndsAt']);
+  const enEssai =
+    ecole['statut'] === 'essai' &&
+    trialEndsAt !== undefined &&
+    trialEndsAt > new Date();
+  if (enEssai) return true;
+
+  // Filtre sur un seul champ pour éviter un index composite Firestore ;
+  // le filtre sur dateFin se fait en mémoire (peu de lignes par école).
+  const abonnementsActifs = await db
+    .collection('ecoles')
+    .doc(ecoleId)
+    .collection('abonnements')
+    .where('statut', '==', 'actif')
+    .get();
+
+  const maintenant = new Date();
+  return abonnementsActifs.docs.some((doc) => {
+    const dateFin = versDate(doc.data()['dateFin']);
+    return dateFin !== undefined && dateFin >= maintenant;
+  });
 }
