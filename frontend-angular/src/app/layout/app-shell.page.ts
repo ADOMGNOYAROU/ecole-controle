@@ -22,7 +22,16 @@ import { AuthService } from '../core/auth.service';
         </div>
 
         <nav class="flex-1 space-y-0.5">
-          <a routerLink="/dashboard" routerLinkActive="nav-active" class="nav-link">Tableau de bord</a>
+          @if (!estSuperAdmin()) {
+            <a routerLink="/dashboard" routerLinkActive="nav-active" class="nav-link">Tableau de bord</a>
+          }
+
+          @if (estSuperAdmin()) {
+            <p class="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Administration SaaS</p>
+            <a routerLink="/super-admin" routerLinkActive="nav-active" class="nav-link">Tableau de bord</a>
+            <a routerLink="/super-admin/ecoles" routerLinkActive="nav-active" class="nav-link">Écoles</a>
+            <a routerLink="/super-admin/factures" routerLinkActive="nav-active" class="nav-link">Factures</a>
+          }
 
           @if (estEleve()) {
             <a routerLink="/mon-espace" routerLinkActive="nav-active" class="nav-link">Mon espace</a>
@@ -50,13 +59,16 @@ import { AuthService } from '../core/auth.service';
             <a routerLink="/tuteurs" routerLinkActive="nav-active" class="nav-link">Parents / Tuteurs</a>
             <a routerLink="/eleves" routerLinkActive="nav-active" class="nav-link">Élèves</a>
             <a routerLink="/paiements" routerLinkActive="nav-active" class="nav-link">Paiements</a>
+            <a routerLink="/abonnement" routerLinkActive="nav-active" class="nav-link">Abonnement</a>
           }
 
-          <p class="px-3 pt-4 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Communication</p>
-          <a routerLink="/annonces" routerLinkActive="nav-active" class="nav-link">Annonces</a>
-          <a routerLink="/notifications" routerLinkActive="nav-active" class="nav-link">Notifications</a>
-          @if (estEnseignantOuParent()) {
-            <a routerLink="/messagerie" routerLinkActive="nav-active" class="nav-link">Messagerie</a>
+          @if (!estSuperAdmin()) {
+            <p class="px-3 pt-4 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Communication</p>
+            <a routerLink="/annonces" routerLinkActive="nav-active" class="nav-link">Annonces</a>
+            <a routerLink="/notifications" routerLinkActive="nav-active" class="nav-link">Notifications</a>
+            @if (estEnseignantOuParent()) {
+              <a routerLink="/messagerie" routerLinkActive="nav-active" class="nav-link">Messagerie</a>
+            }
           }
         </nav>
 
@@ -106,6 +118,10 @@ export class AppShellPage {
 
   estAdmin(): boolean {
     return this.session()?.role === 'admin';
+  }
+
+  estSuperAdmin(): boolean {
+    return this.session()?.role === 'super_admin';
   }
 
   estAdminOuEnseignant(): boolean {

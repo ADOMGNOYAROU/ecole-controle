@@ -79,7 +79,7 @@ export async function trouverTrimestreActuelId(
   return parOrdreDesc[0]?.id ?? null;
 }
 
-function versDate(valeur: unknown): Date | undefined {
+export function versDate(valeur: unknown): Date | undefined {
   return valeur instanceof Timestamp ? valeur.toDate() : undefined;
 }
 
@@ -150,6 +150,32 @@ export async function creerNotification(
     lu: false,
     creeLe: FieldValue.serverTimestamp(),
   });
+}
+
+// Reproduit Ecole::abonnementActif() : le dernier abonnement actif et non
+// expiré, ou null. Filtre sur un seul champ (statut) pour éviter un index
+// composite, la comparaison de date_fin se fait en mémoire.
+export async function trouverAbonnementActif(
+  db: Firestore,
+  ecoleId: string,
+): Promise<Record<string, unknown> | null> {
+  const snap = await ecoleCollection(db, ecoleId, 'abonnements')
+    .where('statut', '==', 'actif')
+    .get();
+
+  const maintenant = new Date();
+  const actifs = snap.docs
+    .map((doc) => ({ id: doc.id, ...doc.data() }))
+    .filter((abonnement) => {
+      const dateFin = versDate(abonnement['dateFin']);
+      return dateFin !== undefined && dateFin >= maintenant;
+    })
+    .sort(
+      (a, b) =>
+        versDate(b['dateFin'])!.getTime() - versDate(a['dateFin'])!.getTime(),
+    );
+
+  return actifs[0] ?? null;
 }
 
 export async function trouverEleveIdParUid(

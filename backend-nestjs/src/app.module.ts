@@ -27,6 +27,7 @@ import { AnnoncesModule } from './annonces/annonces.module';
 import { MessagerieModule } from './messagerie/messagerie.module';
 import { EspaceEleveModule } from './espace-eleve/espace-eleve.module';
 import { EspaceParentModule } from './espace-parent/espace-parent.module';
+import { FacturesModule } from './factures/factures.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { EspaceParentModule } from './espace-parent/espace-parent.module';
     MessagerieModule,
     EspaceEleveModule,
     EspaceParentModule,
+    FacturesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

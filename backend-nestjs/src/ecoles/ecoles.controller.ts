@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
@@ -25,8 +26,12 @@ export class EcolesController {
   @Get('super-admin/ecoles')
   @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles('super_admin')
-  lister() {
-    return this.ecolesService.lister();
+  lister(
+    @Query('recherche') recherche?: string,
+    @Query('statut') statut?: string,
+    @Query('plan') plan?: string,
+  ) {
+    return this.ecolesService.lister({ recherche, statut, plan });
   }
 
   @Get('super-admin/ecoles/:id')

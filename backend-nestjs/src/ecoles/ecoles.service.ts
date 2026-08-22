@@ -7,10 +7,20 @@ import {
 import type { Auth } from 'firebase-admin/auth';
 import type { Firestore } from 'firebase-admin/firestore';
 import { FieldValue } from 'firebase-admin/firestore';
+import {
+  ecoleCollection,
+  trouverAbonnementActif,
+} from '../common/firestore.helpers';
 import { FIREBASE_AUTH, FIRESTORE } from '../firebase/firebase.constants';
 import { InscriptionEcoleDto } from './dto/inscription-ecole.dto';
 
 const DUREE_ESSAI_JOURS = 30;
+
+export interface FiltresEcoles {
+  recherche?: string;
+  statut?: string;
+  plan?: string;
+}
 
 @Injectable()
 export class EcolesService {
@@ -100,20 +110,91 @@ export class EcolesService {
     return { customToken };
   }
 
-  async lister() {
+  // Reproduit SuperAdmin\EcoleController::index() : recherche sur
+  // nom/ville et filtres statut/plan appliqués en mémoire (peu d'écoles
+  // par plateforme), plutôt qu'une pagination/requête composite Firestore.
+  async lister(filtres: FiltresEcoles) {
     const snap = await this.db
       .collection('ecoles')
       .orderBy('createdAt', 'desc')
       .get();
-    return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+    let ecoles = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+    if (filtres.recherche) {
+      const recherche = filtres.recherche.toLowerCase();
+      ecoles = ecoles.filter(
+        (e) =>
+          (e['nom'] as string | undefined)?.toLowerCase().includes(recherche) ||
+          (e['ville'] as string | undefined)?.toLowerCase().includes(recherche),
+      );
+    }
+    if (filtres.statut) {
+      ecoles = ecoles.filter((e) => e['statut'] === filtres.statut);
+    }
+    if (filtres.plan) {
+      ecoles = ecoles.filter((e) => e['plan'] === filtres.plan);
+    }
+
+    return Promise.all(
+      ecoles.map(async (ecole) => ({
+        ...ecole,
+        utilisateursCount: await this.compterUtilisateurs(ecole['id']),
+      })),
+    );
   }
 
+  // Reproduit SuperAdmin\EcoleController::show().
   async trouver(ecoleId: string) {
     const doc = await this.db.collection('ecoles').doc(ecoleId).get();
     if (!doc.exists) {
       throw new NotFoundException('École introuvable.');
     }
-    return { id: doc.id, ...doc.data() };
+
+    const [
+      eleves,
+      enseignants,
+      classes,
+      utilisateurs,
+      abonnements,
+      factures,
+      abonnementActif,
+    ] = await Promise.all([
+      ecoleCollection(this.db, ecoleId, 'eleves').count().get(),
+      ecoleCollection(this.db, ecoleId, 'enseignants').count().get(),
+      ecoleCollection(this.db, ecoleId, 'classes').count().get(),
+      this.compterUtilisateurs(ecoleId),
+      ecoleCollection(this.db, ecoleId, 'abonnements')
+        .orderBy('dateFin', 'desc')
+        .get(),
+      ecoleCollection(this.db, ecoleId, 'factures')
+        .orderBy('createdAt', 'desc')
+        .get(),
+      trouverAbonnementActif(this.db, ecoleId),
+    ]);
+
+    return {
+      id: doc.id,
+      ...doc.data(),
+      stats: {
+        eleves: eleves.data().count,
+        enseignants: enseignants.data().count,
+        classes: classes.data().count,
+        utilisateurs,
+      },
+      abonnements: abonnements.docs.map((d) => ({ id: d.id, ...d.data() })),
+      factures: factures.docs.map((d) => ({ id: d.id, ...d.data() })),
+      abonnementActif,
+    };
+  }
+
+  private async compterUtilisateurs(ecoleId: string): Promise<number> {
+    const snap = await this.db
+      .collection('users')
+      .where('ecoleId', '==', ecoleId)
+      .count()
+      .get();
+    return snap.data().count;
   }
 
   async suspendre(ecoleId: string) {

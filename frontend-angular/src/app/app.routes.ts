@@ -57,6 +57,10 @@ export const routes: Routes = [
             path: 'paiements',
             loadComponent: () => import('./features/paiements/paiements.page').then((m) => m.PaiementsPage),
           },
+          {
+            path: 'abonnement',
+            loadComponent: () => import('./features/abonnement/abonnement.page').then((m) => m.AbonnementPage),
+          },
         ],
       },
       {
@@ -122,6 +126,31 @@ export const routes: Routes = [
           {
             path: 'mes-enfants',
             loadComponent: () => import('./features/mes-enfants/mes-enfants.page').then((m) => m.MesEnfantsPage),
+          },
+        ],
+      },
+      {
+        path: '',
+        canActivate: [roleGuard(['super_admin'])],
+        children: [
+          {
+            path: 'super-admin',
+            loadComponent: () =>
+              import('./features/super-admin/dashboard.page').then((m) => m.SuperAdminDashboardPage),
+          },
+          {
+            path: 'super-admin/ecoles',
+            loadComponent: () => import('./features/super-admin/ecoles.page').then((m) => m.SuperAdminEcolesPage),
+          },
+          {
+            path: 'super-admin/ecoles/:id',
+            loadComponent: () =>
+              import('./features/super-admin/ecole-detail.page').then((m) => m.SuperAdminEcoleDetailPage),
+          },
+          {
+            path: 'super-admin/factures',
+            loadComponent: () =>
+              import('./features/super-admin/factures.page').then((m) => m.SuperAdminFacturesPage),
           },
         ],
       },
