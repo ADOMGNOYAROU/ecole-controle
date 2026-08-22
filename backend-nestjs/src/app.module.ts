@@ -25,6 +25,8 @@ import { PaiementsModule } from './paiements/paiements.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AnnoncesModule } from './annonces/annonces.module';
 import { MessagerieModule } from './messagerie/messagerie.module';
+import { EspaceEleveModule } from './espace-eleve/espace-eleve.module';
+import { EspaceParentModule } from './espace-parent/espace-parent.module';
 
 @Module({
   imports: [
@@ -52,6 +54,8 @@ import { MessagerieModule } from './messagerie/messagerie.module';
     NotificationsModule,
     AnnoncesModule,
     MessagerieModule,
+    EspaceEleveModule,
+    EspaceParentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

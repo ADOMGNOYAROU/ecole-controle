@@ -24,22 +24,33 @@ import { AuthService } from '../core/auth.service';
         <nav class="flex-1 space-y-0.5">
           <a routerLink="/dashboard" routerLinkActive="nav-active" class="nav-link">Tableau de bord</a>
 
-          <p class="px-3 pt-4 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Vie scolaire</p>
-          <a routerLink="/emploi-du-temps" routerLinkActive="nav-active" class="nav-link">Emploi du temps</a>
-          <a routerLink="/notes" routerLinkActive="nav-active" class="nav-link">Notes</a>
-          <a routerLink="/presences" routerLinkActive="nav-active" class="nav-link">Présences</a>
-          <a routerLink="/bulletins" routerLinkActive="nav-active" class="nav-link">Bulletins</a>
-          <a routerLink="/progression" routerLinkActive="nav-active" class="nav-link">Risque d'échec</a>
+          @if (estEleve()) {
+            <a routerLink="/mon-espace" routerLinkActive="nav-active" class="nav-link">Mon espace</a>
+          }
+          @if (estParent()) {
+            <a routerLink="/mes-enfants" routerLinkActive="nav-active" class="nav-link">Mes enfants</a>
+          }
 
-          <p class="px-3 pt-4 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Référentiel</p>
-          <a routerLink="/annees-scolaires" routerLinkActive="nav-active" class="nav-link">Années scolaires</a>
-          <a routerLink="/trimestres" routerLinkActive="nav-active" class="nav-link">Trimestres</a>
-          <a routerLink="/classes" routerLinkActive="nav-active" class="nav-link">Classes</a>
-          <a routerLink="/matieres" routerLinkActive="nav-active" class="nav-link">Matières</a>
-          <a routerLink="/enseignants" routerLinkActive="nav-active" class="nav-link">Enseignants</a>
-          <a routerLink="/tuteurs" routerLinkActive="nav-active" class="nav-link">Parents / Tuteurs</a>
-          <a routerLink="/eleves" routerLinkActive="nav-active" class="nav-link">Élèves</a>
-          <a routerLink="/paiements" routerLinkActive="nav-active" class="nav-link">Paiements</a>
+          @if (estAdminOuEnseignant()) {
+            <p class="px-3 pt-4 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Vie scolaire</p>
+            <a routerLink="/emploi-du-temps" routerLinkActive="nav-active" class="nav-link">Emploi du temps</a>
+            <a routerLink="/notes" routerLinkActive="nav-active" class="nav-link">Notes</a>
+            <a routerLink="/presences" routerLinkActive="nav-active" class="nav-link">Présences</a>
+            <a routerLink="/bulletins" routerLinkActive="nav-active" class="nav-link">Bulletins</a>
+            <a routerLink="/progression" routerLinkActive="nav-active" class="nav-link">Risque d'échec</a>
+          }
+
+          @if (estAdmin()) {
+            <p class="px-3 pt-4 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Référentiel</p>
+            <a routerLink="/annees-scolaires" routerLinkActive="nav-active" class="nav-link">Années scolaires</a>
+            <a routerLink="/trimestres" routerLinkActive="nav-active" class="nav-link">Trimestres</a>
+            <a routerLink="/classes" routerLinkActive="nav-active" class="nav-link">Classes</a>
+            <a routerLink="/matieres" routerLinkActive="nav-active" class="nav-link">Matières</a>
+            <a routerLink="/enseignants" routerLinkActive="nav-active" class="nav-link">Enseignants</a>
+            <a routerLink="/tuteurs" routerLinkActive="nav-active" class="nav-link">Parents / Tuteurs</a>
+            <a routerLink="/eleves" routerLinkActive="nav-active" class="nav-link">Élèves</a>
+            <a routerLink="/paiements" routerLinkActive="nav-active" class="nav-link">Paiements</a>
+          }
 
           <p class="px-3 pt-4 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Communication</p>
           <a routerLink="/annonces" routerLinkActive="nav-active" class="nav-link">Annonces</a>
@@ -91,6 +102,23 @@ export class AppShellPage {
   estEnseignantOuParent(): boolean {
     const role = this.session()?.role;
     return role === 'enseignant' || role === 'parent';
+  }
+
+  estAdmin(): boolean {
+    return this.session()?.role === 'admin';
+  }
+
+  estAdminOuEnseignant(): boolean {
+    const role = this.session()?.role;
+    return role === 'admin' || role === 'enseignant';
+  }
+
+  estEleve(): boolean {
+    return this.session()?.role === 'eleve';
+  }
+
+  estParent(): boolean {
+    return this.session()?.role === 'parent';
   }
 
   async seDeconnecter(): Promise<void> {

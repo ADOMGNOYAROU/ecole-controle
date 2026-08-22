@@ -151,3 +151,15 @@ export async function creerNotification(
     creeLe: FieldValue.serverTimestamp(),
   });
 }
+
+export async function trouverEleveIdParUid(
+  db: Firestore,
+  ecoleId: string,
+  uid: string,
+): Promise<string | null> {
+  const snap = await ecoleCollection(db, ecoleId, 'eleves')
+    .where('userId', '==', uid)
+    .limit(1)
+    .get();
+  return snap.empty ? null : snap.docs[0].id;
+}

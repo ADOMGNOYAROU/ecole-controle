@@ -10,5 +10,6 @@ import { PaiementsService } from './paiements.service';
   imports: [AuthModule, PdfModule, MailModule],
   controllers: [PaiementsController],
   providers: [PaiementsService, PaiementsRappelsService],
+  exports: [PaiementsService],
 })
 export class PaiementsModule {}

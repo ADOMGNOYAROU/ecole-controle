@@ -72,4 +72,5 @@ Le risque d'échec (`/eleves/{id}/progression`) n'est **pas persisté** : il est
 - [x] Phase 4 : bulletins, risque d'échec, rapports PDF
 - [x] Phase 5 : paiements, relances automatiques (cron + déclenchement manuel), notifications
 - [x] Phase 6 : messagerie (enseignant ↔ parent), annonces (visibilité par rôle/classe), notifications (liste + marquage lu)
-- [ ] Phase 7+ : espaces élève/parent, abonnement, super-admin
+- [x] Phase 7 : espace élève (mon-espace) et espace parent (mes-enfants) en libre-service
+- [ ] Phase 8+ : abonnement, super-admin

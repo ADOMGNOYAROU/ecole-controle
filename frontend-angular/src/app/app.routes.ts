@@ -105,6 +105,26 @@ export const routes: Routes = [
           },
         ],
       },
+      {
+        path: '',
+        canActivate: [roleGuard(['eleve'])],
+        children: [
+          {
+            path: 'mon-espace',
+            loadComponent: () => import('./features/mon-espace/mon-espace.page').then((m) => m.MonEspacePage),
+          },
+        ],
+      },
+      {
+        path: '',
+        canActivate: [roleGuard(['parent'])],
+        children: [
+          {
+            path: 'mes-enfants',
+            loadComponent: () => import('./features/mes-enfants/mes-enfants.page').then((m) => m.MesEnfantsPage),
+          },
+        ],
+      },
     ],
   },
 ];

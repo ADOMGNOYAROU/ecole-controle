@@ -5,7 +5,7 @@ import { ecoleCollection, getDocOrThrow } from '../common/firestore.helpers';
 import { FIRESTORE } from '../firebase/firebase.constants';
 import { MatiereBulletin, PdfService } from '../pdf/pdf.service';
 
-interface DonneesBulletin {
+export interface DonneesBulletin {
   matieres: MatiereBulletin[];
   moyenneGenerale: number | null;
 }
