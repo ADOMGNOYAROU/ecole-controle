@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 
@@ -39,6 +40,13 @@ import { AuthService } from '../core/auth.service';
           <a routerLink="/tuteurs" routerLinkActive="nav-active" class="nav-link">Parents / Tuteurs</a>
           <a routerLink="/eleves" routerLinkActive="nav-active" class="nav-link">Élèves</a>
           <a routerLink="/paiements" routerLinkActive="nav-active" class="nav-link">Paiements</a>
+
+          <p class="px-3 pt-4 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Communication</p>
+          <a routerLink="/annonces" routerLinkActive="nav-active" class="nav-link">Annonces</a>
+          <a routerLink="/notifications" routerLinkActive="nav-active" class="nav-link">Notifications</a>
+          @if (estEnseignantOuParent()) {
+            <a routerLink="/messagerie" routerLinkActive="nav-active" class="nav-link">Messagerie</a>
+          }
         </nav>
 
         <button
@@ -78,6 +86,12 @@ import { AuthService } from '../core/auth.service';
 export class AppShellPage {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly session = toSignal(this.authService.user$, { initialValue: null });
+
+  estEnseignantOuParent(): boolean {
+    const role = this.session()?.role;
+    return role === 'enseignant' || role === 'parent';
+  }
 
   async seDeconnecter(): Promise<void> {
     await this.authService.deconnexion();

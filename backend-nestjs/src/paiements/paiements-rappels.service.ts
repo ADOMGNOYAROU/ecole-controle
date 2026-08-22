@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import type { Firestore } from 'firebase-admin/firestore';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import {
+  creerNotification,
   ecoleAAccesPremium,
   ecoleCollection,
 } from '../common/firestore.helpers';
@@ -117,13 +118,11 @@ export class PaiementsRappelsService {
         });
       }
 
-      await ecoleCollection(this.db, ecoleId, 'notifications').add({
+      await creerNotification(this.db, ecoleId, {
         utilisateurId: userId,
         titre: enRetard ? 'Paiement en retard' : 'Échéance de paiement proche',
         message: `${eleveNom} — ${new Intl.NumberFormat('fr-FR').format(solde)} FCFA dû(s) pour le ${paiement['dateEcheance'] as string}`,
         type: 'paiement_rappel',
-        lu: false,
-        creeLe: FieldValue.serverTimestamp(),
       });
     }
 

@@ -22,6 +22,9 @@ import { BulletinsModule } from './bulletins/bulletins.module';
 import { ProgressionModule } from './progression/progression.module';
 import { MailModule } from './mail/mail.module';
 import { PaiementsModule } from './paiements/paiements.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { AnnoncesModule } from './annonces/annonces.module';
+import { MessagerieModule } from './messagerie/messagerie.module';
 
 @Module({
   imports: [
@@ -46,6 +49,9 @@ import { PaiementsModule } from './paiements/paiements.module';
     ProgressionModule,
     MailModule,
     PaiementsModule,
+    NotificationsModule,
+    AnnoncesModule,
+    MessagerieModule,
   ],
   controllers: [AppController],
   providers: [AppService],

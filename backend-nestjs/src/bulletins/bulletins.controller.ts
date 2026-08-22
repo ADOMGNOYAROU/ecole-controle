@@ -10,13 +10,15 @@ import {
 import type { Response } from 'express';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
+import { PremiumGuard } from '../auth/premium.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import type { AuthenticatedUser } from '../auth/types';
 import { BulletinsService } from './bulletins.service';
 
+// Fonctionnalité Premium dans son intégralité, comme dans l'app d'origine.
 @Controller('bulletins')
-@UseGuards(FirebaseAuthGuard, RolesGuard)
+@UseGuards(FirebaseAuthGuard, RolesGuard, PremiumGuard)
 @Roles('admin', 'enseignant')
 export class BulletinsController {
   constructor(private readonly service: BulletinsService) {}

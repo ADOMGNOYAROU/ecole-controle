@@ -4,7 +4,7 @@ import type {
   DocumentReference,
   Firestore,
 } from 'firebase-admin/firestore';
-import { Timestamp } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 
 export function ecoleCollection(
   db: Firestore,
@@ -113,5 +113,41 @@ export async function ecoleAAccesPremium(
   return abonnementsActifs.docs.some((doc) => {
     const dateFin = versDate(doc.data()['dateFin']);
     return dateFin !== undefined && dateFin >= maintenant;
+  });
+}
+
+export async function trouverTuteurIdParUid(
+  db: Firestore,
+  ecoleId: string,
+  uid: string,
+): Promise<string | null> {
+  const snap = await ecoleCollection(db, ecoleId, 'tuteurs')
+    .where('userId', '==', uid)
+    .limit(1)
+    .get();
+  return snap.empty ? null : snap.docs[0].id;
+}
+
+export interface NouvelleNotification {
+  utilisateurId: string;
+  titre: string;
+  message: string;
+  type: string;
+  lien?: string | null;
+}
+
+export async function creerNotification(
+  db: Firestore,
+  ecoleId: string,
+  notification: NouvelleNotification,
+): Promise<void> {
+  await ecoleCollection(db, ecoleId, 'notifications').add({
+    utilisateurId: notification.utilisateurId,
+    titre: notification.titre,
+    message: notification.message,
+    type: notification.type,
+    lien: notification.lien ?? null,
+    lu: false,
+    creeLe: FieldValue.serverTimestamp(),
   });
 }

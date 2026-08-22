@@ -84,6 +84,25 @@ export const routes: Routes = [
             path: 'progression',
             loadComponent: () => import('./features/progression/progression.page').then((m) => m.ProgressionPage),
           },
+          {
+            path: 'notifications',
+            loadComponent: () =>
+              import('./features/notifications/notifications.page').then((m) => m.NotificationsPage),
+          },
+          {
+            path: 'annonces',
+            loadComponent: () => import('./features/annonces/annonces.page').then((m) => m.AnnoncesPage),
+          },
+        ],
+      },
+      {
+        path: '',
+        canActivate: [roleGuard(['enseignant', 'parent'])],
+        children: [
+          {
+            path: 'messagerie',
+            loadComponent: () => import('./features/messagerie/messagerie.page').then((m) => m.MessageriePage),
+          },
         ],
       },
     ],

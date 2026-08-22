@@ -56,9 +56,9 @@ createdAt: timestamp
 | `presences/{id}` | Présences | `eleveId, classeId, enseignantId, trimestreId, date, statut, motif`. ID déterministe `eleveId_date` (upsert, un seul statut par élève et par jour). |
 | `bulletins/{id}` | Bulletins (instantanés) | `eleveId, classeId, trimestreId, moyenneGenerale, rang, appreciation, tauxPresence, matieresDetail[], genereLe`. ID déterministe `eleveId_trimestreId` ; le PDF est régénéré à la demande depuis cet instantané (pas de fichier stocké). |
 | `paiements/{id}` | Paiements | `eleveId, anneeScolaireId, type, montant, montantPaye, dateEcheance, datePaiement, statut, commentaire, dernierRappelLe` |
-| `notifications/{id}` | Notifications | `utilisateurId, titre, message, type, lu, creeLe` |
-| `messages/{id}` | Messagerie | `participants[], texte, envoyeParId, envoyeLe, lu` |
-| `annonces/{id}` | Annonces | `titre, contenu, cibleRoles[], publieParId, publieLe` |
+| `notifications/{id}` | Notifications | `utilisateurId, titre, message, type, lien, lu, creeLe` |
+| `messages/{id}` | Messagerie | `expediteurId, destinataireId, contenu, lu, createdAt` |
+| `annonces/{id}` | Annonces | `titre, contenu, cible ('tous'\|'parents'\|'enseignants'\|'eleves'\|'classe'), classeId, auteurId, datePublication`. Visibilité filtrée côté service selon le rôle du lecteur. |
 | `abonnements/{id}` | Historique d'abonnement | `statut, dateDebut, dateFin, montant` |
 | `factures/{id}` | Facturation abonnement | `montant, statut, periode, dateEmission, dateConfirmation` |
 
@@ -71,4 +71,5 @@ Le risque d'échec (`/eleves/{id}/progression`) n'est **pas persisté** : il est
 - [x] Phase 3 : emploi du temps, notes, présences
 - [x] Phase 4 : bulletins, risque d'échec, rapports PDF
 - [x] Phase 5 : paiements, relances automatiques (cron + déclenchement manuel), notifications
-- [ ] Phase 6+ : messagerie, annonces, espaces élève/parent, abonnement, super-admin
+- [x] Phase 6 : messagerie (enseignant ↔ parent), annonces (visibilité par rôle/classe), notifications (liste + marquage lu)
+- [ ] Phase 7+ : espaces élève/parent, abonnement, super-admin

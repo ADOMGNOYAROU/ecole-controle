@@ -13,6 +13,7 @@ import type { Response } from 'express';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 import { PdfService } from '../pdf/pdf.service';
+import { PremiumGuard } from '../auth/premium.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import type { AuthenticatedUser } from '../auth/types';
@@ -34,6 +35,7 @@ export class MatieresController {
   }
 
   @Get('rapport')
+  @UseGuards(PremiumGuard)
   async rapport(
     @CurrentUser() user: AuthenticatedUser,
     @Res() res: Response,
