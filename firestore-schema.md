@@ -74,4 +74,4 @@ Le risque d'échec (`/eleves/{id}/progression`) n'est **pas persisté** : il est
 - [x] Phase 6 : messagerie (enseignant ↔ parent), annonces (visibilité par rôle/classe), notifications (liste + marquage lu)
 - [x] Phase 7 : espace élève (mon-espace) et espace parent (mes-enfants) en libre-service
 - [x] Phase 8 : plateforme SaaS (abonnement école, super-admin : écoles/factures/dashboard)
-- [ ] Phase 9 : bascule finale (migration des données MySQL, coupure)
+- [x] Phase 9 : script de migration des données Laravel (SQLite) vers Firestore, avec préservation des mots de passe (hash bcrypt importé dans Firebase Auth) — voir `backend-nestjs/scripts/migrer-depuis-laravel.ts`
