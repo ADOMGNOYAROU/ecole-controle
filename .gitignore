@@ -19,6 +19,11 @@ yarn-error.log
 # Secrets (Firebase service account keys, etc.)
 /secrets/
 
+# Firebase CLI
+/.firebase/
+firebase-debug.log
+firestore-debug.log
+
 # IDEs and editors
 .idea
 .vscode

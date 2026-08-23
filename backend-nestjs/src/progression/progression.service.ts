@@ -96,6 +96,44 @@ export class ProgressionService {
     };
   }
 
+  // Reproduit ProgressionService::idsElevesARisque() côté Laravel, utilisé
+  // par le tableau de bord admin. Recalculé à la demande, sans cache, comme
+  // le reste de l'analyse de progression.
+  async listerElevesARisque(
+    ecoleId: string,
+    limite = 6,
+  ): Promise<
+    { id: string; nom: string; prenom: string; classeId: string | null }[]
+  > {
+    const elevesSnap = await ecoleCollection(this.db, ecoleId, 'eleves')
+      .where('statut', '==', 'actif')
+      .get();
+
+    const resultats: {
+      id: string;
+      nom: string;
+      prenom: string;
+      classeId: string | null;
+    }[] = [];
+
+    for (const doc of elevesSnap.docs) {
+      const analyse = await this.analyser(ecoleId, doc.id);
+      if (analyse.risque.enRisque) {
+        const e = doc.data();
+        resultats.push({
+          id: doc.id,
+          nom: e['nom'] as string,
+          prenom: e['prenom'] as string,
+          classeId: (e['classeId'] as string | null) ?? null,
+        });
+      }
+    }
+
+    return resultats
+      .sort((a, b) => a.nom.localeCompare(b.nom))
+      .slice(0, limite);
+  }
+
   private async trimestresAvecNotes(
     ecoleId: string,
     eleveId: string,

@@ -28,6 +28,7 @@ import { MessagerieModule } from './messagerie/messagerie.module';
 import { EspaceEleveModule } from './espace-eleve/espace-eleve.module';
 import { EspaceParentModule } from './espace-parent/espace-parent.module';
 import { FacturesModule } from './factures/factures.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { FacturesModule } from './factures/factures.module';
     EspaceEleveModule,
     EspaceParentModule,
     FacturesModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
