@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: scolarix-api
+    runtime: node
+    rootDir: backend-nestjs
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: FIREBASE_PROJECT_ID
+        value: scolarix-447f2
+      - key: FIREBASE_SERVICE_ACCOUNT_PATH
+        value: /etc/secrets/firebase-adminsdk.json
+      - key: NODE_VERSION
+        value: 20

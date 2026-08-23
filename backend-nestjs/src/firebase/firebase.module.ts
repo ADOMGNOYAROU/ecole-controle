@@ -26,12 +26,19 @@ import { FIREBASE_APP, FIREBASE_AUTH, FIRESTORE } from './firebase.constants';
           return getApp();
         }
 
-        const serviceAccountPath = resolve(
-          process.cwd(),
-          config.getOrThrow<string>('FIREBASE_SERVICE_ACCOUNT_PATH'),
+        // En développement local, on s'authentifie avec la clé de compte de
+        // service téléchargée (FIREBASE_SERVICE_ACCOUNT_PATH). En production
+        // (Cloud Functions/Cloud Run), aucune clé n'est nécessaire : les
+        // identifiants par défaut de l'environnement (ADC) suffisent.
+        const serviceAccountPath = config.get<string>(
+          'FIREBASE_SERVICE_ACCOUNT_PATH',
         );
+        if (!serviceAccountPath) {
+          return initializeApp();
+        }
+
         const serviceAccount = JSON.parse(
-          readFileSync(serviceAccountPath, 'utf-8'),
+          readFileSync(resolve(process.cwd(), serviceAccountPath), 'utf-8'),
         ) as ServiceAccount;
 
         return initializeApp({
