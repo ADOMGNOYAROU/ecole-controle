@@ -27,11 +27,16 @@ export class AnneesScolairesService {
     this.verifierPeriode(dto);
     await this.verifierLibelleUnique(ecoleId, dto.libelle);
 
+    const active = dto.active ?? false;
+    if (active) {
+      await this.desactiverLesAutres(ecoleId);
+    }
+
     const ref = await ecoleCollection(this.db, ecoleId, 'anneesScolaires').add({
       libelle: dto.libelle,
       dateDebut: new Date(dto.dateDebut),
       dateFin: new Date(dto.dateFin),
-      active: dto.active ?? false,
+      active,
       createdAt: FieldValue.serverTimestamp(),
     });
     return { id: ref.id };
@@ -47,12 +52,36 @@ export class AnneesScolairesService {
     await getDocOrThrow(ref, 'Année scolaire introuvable.');
     await this.verifierLibelleUnique(ecoleId, dto.libelle, id);
 
+    const active = dto.active ?? false;
+    if (active) {
+      await this.desactiverLesAutres(ecoleId, id);
+    }
+
     await ref.update({
       libelle: dto.libelle,
       dateDebut: new Date(dto.dateDebut),
       dateFin: new Date(dto.dateFin),
-      active: dto.active ?? false,
+      active,
     });
+  }
+
+  // Reproduit AnneeScolaireController::appliquerActivation() : une seule
+  // année scolaire active à la fois par école (sinon trouverTrimestreActuelId
+  // devient ambigu et casse bulletins/dashboard/paiements).
+  private async desactiverLesAutres(
+    ecoleId: string,
+    ignorerId?: string,
+  ): Promise<void> {
+    const snap = await ecoleCollection(this.db, ecoleId, 'anneesScolaires')
+      .where('active', '==', true)
+      .get();
+    const batch = this.db.batch();
+    for (const doc of snap.docs) {
+      if (doc.id !== ignorerId) {
+        batch.update(doc.ref, { active: false });
+      }
+    }
+    await batch.commit();
   }
 
   async supprimer(ecoleId: string, id: string): Promise<void> {
