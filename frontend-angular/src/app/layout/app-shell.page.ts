@@ -59,6 +59,7 @@ import { AuthService } from '../core/auth.service';
             <a routerLink="/tuteurs" routerLinkActive="nav-active" class="nav-link">Parents / Tuteurs</a>
             <a routerLink="/eleves" routerLinkActive="nav-active" class="nav-link">Élèves</a>
             <a routerLink="/paiements" routerLinkActive="nav-active" class="nav-link">Paiements</a>
+            <a routerLink="/comptes" routerLinkActive="nav-active" class="nav-link">Comptes de connexion</a>
             <a routerLink="/abonnement" routerLinkActive="nav-active" class="nav-link">Abonnement</a>
           }
 
@@ -71,6 +72,11 @@ import { AuthService } from '../core/auth.service';
             }
           }
         </nav>
+
+        <a routerLink="/guide" routerLinkActive="nav-active" class="nav-link mb-1 flex items-center gap-2">
+          <span>❓</span>
+          Guide d'utilisation
+        </a>
 
         <button
           (click)="seDeconnecter()"

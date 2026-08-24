@@ -21,6 +21,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/dashboard/dashboard.page').then((m) => m.DashboardPage),
       },
       {
+        path: 'guide',
+        loadComponent: () => import('./features/guide/guide.page').then((m) => m.GuidePage),
+      },
+      {
         path: '',
         canActivate: [roleGuard(['admin'])],
         children: [
@@ -60,6 +64,10 @@ export const routes: Routes = [
           {
             path: 'abonnement',
             loadComponent: () => import('./features/abonnement/abonnement.page').then((m) => m.AbonnementPage),
+          },
+          {
+            path: 'comptes',
+            loadComponent: () => import('./features/comptes/comptes.page').then((m) => m.ComptesPage),
           },
         ],
       },
