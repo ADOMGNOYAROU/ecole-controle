@@ -46,6 +46,7 @@
                         <a href="{{ route('tuteurs.index') }}" class="nav-link {{ request()->routeIs('tuteurs.*') ? 'active' : '' }}"><x-nav-icon name="users" />Parents / Tuteurs</a>
                         <a href="{{ route('matieres.index') }}" class="nav-link {{ request()->routeIs('matieres.*') ? 'active' : '' }}"><x-nav-icon name="book-open" />Matières</a>
                         <a href="{{ route('paiements.index') }}" class="nav-link {{ request()->routeIs('paiements.*') ? 'active' : '' }}"><x-nav-icon name="credit-card" />Paiements @unless($premium)<span class="badge-brand ml-1">Premium</span>@endunless</a>
+                        <a href="{{ route('cantine.index') }}" class="nav-link {{ request()->routeIs('cantine.*') ? 'active' : '' }}"><x-nav-icon name="receipt" />Cantine @unless($premium)<span class="badge-brand ml-1">Premium</span>@endunless</a>
                         <a href="{{ route('annees-scolaires.index') }}" class="nav-link {{ request()->routeIs('annees-scolaires.*') || request()->routeIs('trimestres.*') ? 'active' : '' }}"><x-nav-icon name="calendar" />Années scolaires</a>
                         <a href="{{ route('comptes.index') }}" class="nav-link {{ request()->routeIs('comptes.*') ? 'active' : '' }}"><x-nav-icon name="key" />Comptes @unless($premium)<span class="badge-brand ml-1">Premium</span>@endunless</a>
                         <a href="{{ route('abonnement.index') }}" class="nav-link {{ request()->routeIs('abonnement.*') ? 'active' : '' }}"><x-nav-icon name="star" />Abonnement</a>
@@ -62,6 +63,9 @@
                     @endif
 
                     <p class="px-3 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Communication</p>
+                    @if($user->isEnseignant() || $user->isParent())
+                        <a href="{{ route('messagerie.index') }}" class="nav-link {{ request()->routeIs('messagerie.*') ? 'active' : '' }}"><x-nav-icon name="chat" />Messagerie @unless($premium)<span class="badge-brand ml-1">Premium</span>@endunless</a>
+                    @endif
                     <a href="{{ route('annonces.index') }}" class="nav-link {{ request()->routeIs('annonces.*') ? 'active' : '' }}"><x-nav-icon name="megaphone" />Annonces @unless($premium)<span class="badge-brand ml-1">Premium</span>@endunless</a>
                     <a href="{{ route('notifications.index') }}" class="nav-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}"><x-nav-icon name="bell" />Notifications @unless($premium)<span class="badge-brand ml-1">Premium</span>@endunless</a>
                 @endif
@@ -75,7 +79,7 @@
                         <p class="text-xs text-brand-100 mt-0.5">Générez les bulletins PDF de vos classes en un clic.</p>
                     @else
                         <p class="text-sm font-semibold">Passez au Premium</p>
-                        <p class="text-xs text-brand-100 mt-0.5">Bulletins, paiements et annonces dès 15 000 FCFA/trimestre.</p>
+                        <p class="text-xs text-brand-100 mt-0.5">Bulletins, paiements et annonces dès 25 000 FCFA/2 mois.</p>
                     @endif
                 </a>
             @endif

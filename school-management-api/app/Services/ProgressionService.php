@@ -23,14 +23,14 @@ class ProgressionService
             ->get();
 
         $moyennesParTrimestre = $this->moyennesParTrimestre($eleve, $trimestres);
-        $moyennesParMatiere   = $this->moyennesParMatiere($eleve);
-        $tauxPresence         = $this->tauxPresenceParTrimestre($eleve, $trimestres);
+        $moyennesParMatiere = $this->moyennesParMatiere($eleve);
+        $tauxPresence = $this->tauxPresenceParTrimestre($eleve, $trimestres);
 
-        $pointsForts   = $moyennesParMatiere->sortByDesc('moyenne')->take(3)->values();
+        $pointsForts = $moyennesParMatiere->sortByDesc('moyenne')->take(3)->values();
         $pointsFaibles = $moyennesParMatiere->sortBy('moyenne')->take(3)->values();
 
         $tendance = $this->calculerTendance($moyennesParTrimestre);
-        $risque   = $this->evaluerRisque($moyennesParTrimestre);
+        $risque = $this->evaluerRisque($moyennesParTrimestre);
 
         return compact(
             'trimestres',
@@ -58,8 +58,8 @@ class ProgressionService
 
             return [
                 'trimestre' => $t,
-                'label'     => $t->nom,
-                'moyenne'   => $moyenne,
+                'label' => $t->nom,
+                'moyenne' => $moyenne,
             ];
         })->filter(fn ($row) => $row['moyenne'] !== null)->values();
     }
@@ -68,7 +68,7 @@ class ProgressionService
     {
         return $trimestres->map(function (Trimestre $t) use ($eleve) {
             return [
-                'trimestre'     => $t,
+                'trimestre' => $t,
                 'taux_presence' => $eleve->tauxPresenceTrimestre($t->id),
             ];
         })->filter(fn ($row) => $row['taux_presence'] !== null)->values();
@@ -81,13 +81,13 @@ class ProgressionService
             ->get()
             ->groupBy('matiere_id')
             ->map(function (Collection $notesMatiere) {
-                $matiere      = $notesMatiere->first()->matiere;
+                $matiere = $notesMatiere->first()->matiere;
                 $totalPondere = $notesMatiere->sum(fn ($n) => $n->noteSur20() * (float) $n->coefficient);
-                $totalCoeff   = $notesMatiere->sum(fn ($n) => (float) $n->coefficient);
+                $totalCoeff = $notesMatiere->sum(fn ($n) => (float) $n->coefficient);
 
                 return [
-                    'matiere'      => $matiere,
-                    'moyenne'      => $totalCoeff > 0 ? round($totalPondere / $totalCoeff, 2) : null,
+                    'matiere' => $matiere,
+                    'moyenne' => $totalCoeff > 0 ? round($totalPondere / $totalCoeff, 2) : null,
                     'nombre_notes' => $notesMatiere->count(),
                 ];
             })
@@ -101,20 +101,24 @@ class ProgressionService
             return 'stable';
         }
 
-        $last         = (float) $moyennes->last()['moyenne'];
+        $last = (float) $moyennes->last()['moyenne'];
         $avantDernier = (float) $moyennes->slice(-2, 1)->first()['moyenne'];
         $diff = $last - $avantDernier;
 
-        if ($diff > 0.5) return 'hausse';
-        if ($diff < -0.5) return 'baisse';
+        if ($diff > 0.5) {
+            return 'hausse';
+        }
+        if ($diff < -0.5) {
+            return 'baisse';
+        }
 
         return 'stable';
     }
 
     private function evaluerRisque(Collection $moyennes): array
     {
-        $seuil          = self::SEUIL_RISQUE;
-        $consecutifs    = 0;
+        $seuil = self::SEUIL_RISQUE;
+        $consecutifs = 0;
         $maxConsecutifs = 0;
 
         foreach ($moyennes as $row) {
@@ -137,11 +141,11 @@ class ProgressionService
         }
 
         return [
-            'en_risque'             => $enRisque,
-            'niveau'                => $niveau,
+            'en_risque' => $enRisque,
+            'niveau' => $niveau,
             'trimestres_sous_seuil' => $maxConsecutifs,
-            'seuil'                 => $seuil,
-            'derniere_moyenne'      => $derniereMoyenne,
+            'seuil' => $seuil,
+            'derniere_moyenne' => $derniereMoyenne,
         ];
     }
 

@@ -33,6 +33,7 @@ class CreateAdminUser extends Command
 
         if (strlen($password) < 8) {
             $this->error('Le mot de passe doit contenir au moins 8 caractères');
+
             return 1;
         }
 
@@ -45,7 +46,7 @@ class CreateAdminUser extends Command
         ]);
 
         $this->info('Super-administrateur créé avec succès !');
-        $this->info('Email: ' . $email);
+        $this->info('Email: '.$email);
         $this->info('Mot de passe: [le mot de passe que vous avez choisi]');
 
         return 0;

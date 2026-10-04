@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\BulkNoteRequest;
 use App\Http\Requests\NoteRequest;
 use App\Models\Classe;
+use App\Models\Enseignant;
 use App\Models\Matiere;
 use App\Models\Note;
 use App\Models\Trimestre;
@@ -78,7 +79,7 @@ class NoteController extends Controller
             'classes' => Classe::orderBy('nom')->get(),
             'matieres' => Matiere::orderBy('nom')->get(),
             'trimestres' => Trimestre::orderByDesc('date_debut')->get(),
-            'enseignants' => \App\Models\Enseignant::orderBy('nom')->get(),
+            'enseignants' => Enseignant::orderBy('nom')->get(),
         ]);
     }
 
@@ -104,7 +105,7 @@ class NoteController extends Controller
             'classes' => Classe::orderBy('nom')->get(),
             'matieres' => Matiere::orderBy('nom')->get(),
             'trimestres' => Trimestre::orderByDesc('date_debut')->get(),
-            'enseignants' => \App\Models\Enseignant::orderBy('nom')->get(),
+            'enseignants' => Enseignant::orderBy('nom')->get(),
         ]);
     }
 

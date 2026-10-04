@@ -12,14 +12,18 @@ class Ecole extends Model
     use HasFactory;
 
     public const STATUT_ESSAI = 'essai';
+
     public const STATUT_ACTIF = 'actif';
+
     public const STATUT_SUSPENDU = 'suspendu';
+
     public const STATUT_EXPIRE = 'expire';
 
     public const PLAN_GRATUIT = 'gratuit';
+
     public const PLAN_PREMIUM = 'premium';
 
-    public const TARIF_PREMIUM_TRIMESTRIEL = 15000;
+    public const TARIF_PREMIUM_2MOIS = 25000;
 
     protected $fillable = [
         'nom',
@@ -30,11 +34,13 @@ class Ecole extends Model
         'ville',
         'statut',
         'plan',
+        'prix_cantine',
         'trial_ends_at',
     ];
 
     protected $casts = [
         'trial_ends_at' => 'datetime',
+        'prix_cantine' => 'decimal:2',
     ];
 
     public function users(): HasMany

@@ -1,0 +1,116 @@
+name: CI École Manager
+
+# Contrôles lancés à chaque push, sur toutes les branches, et sur chaque pull request
+# vers develop ou master. master n'accepte une modification que si tous ces contrôles
+# sont verts, et Render ne déploie master que dans ce cas (autoDeployTrigger: checksPass).
+on:
+  push:
+  pull_request:
+    branches: [master, develop]
+
+concurrency:
+  group: ci-ecole-manager-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: school-management-api
+
+jobs:
+  qualite:
+    name: Qualité du code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+          coverage: none
+      - uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ hashFiles('school-management-api/composer.lock') }}
+      - run: composer validate --no-check-publish
+      - run: composer install --prefer-dist --no-interaction --no-progress
+      - name: Style du code (Laravel Pint)
+        run: vendor/bin/pint --test
+      - name: Failles de sécurité connues dans les dépendances
+        run: composer audit --no-interaction
+
+  tests-sqlite:
+    name: Tests (SQLite)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_sqlite, gd, zip, bcmath, intl
+          tools: composer:v2
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: school-management-api/package-lock.json
+      - run: composer install --prefer-dist --no-interaction --no-progress
+      - run: npm ci
+      - name: Compilation de l'interface
+        run: npm run build
+      - run: cp .env.example .env && php artisan key:generate
+      - name: Tests unitaires, d'isolation et de bout en bout
+        run: php artisan test
+
+  tests-postgres:
+    name: Tests (PostgreSQL)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ecole_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: ecole_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_pgsql, gd, zip, bcmath, intl
+          tools: composer:v2
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: school-management-api/package-lock.json
+      - run: composer install --prefer-dist --no-interaction --no-progress
+      - run: npm ci
+      - run: npm run build
+      - run: cp .env.example .env && php artisan key:generate
+      - name: Migrations sur PostgreSQL (base de production sur Render)
+        run: php artisan migrate --force
+      - name: Tests sur PostgreSQL
+        run: php artisan test
+
+  docker:
+    name: Image Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construction de l'image déployée sur Render
+        run: docker build --tag ecole-manager:ci .

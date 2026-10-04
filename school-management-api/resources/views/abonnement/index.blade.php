@@ -34,7 +34,7 @@
         @endif
 
         <div class="border border-slate-200 rounded-lg p-4 mb-4">
-            <h3 class="font-semibold text-slate-900 mb-2">Premium — {{ number_format($tarif, 0, ',', ' ') }} FCFA / trimestre</h3>
+            <h3 class="font-semibold text-slate-900 mb-2">Premium — {{ number_format($tarif, 0, ',', ' ') }} FCFA / 2 mois</h3>
             <ul class="text-sm text-slate-600 space-y-1 list-disc list-inside">
                 <li>Bulletins de notes PDF avec moyenne et rang</li>
                 <li>Suivi des paiements de scolarité</li>
@@ -63,10 +63,11 @@
                     </div>
                     <p class="text-slate-400">Échéance : {{ $facture->date_echeance->format('d/m/Y') }}</p>
                     @if($facture->statut === 'en_attente')
-                        <p class="text-xs text-slate-500 mt-1">
-                            Payez via Flooz/TMoney puis communiquez la référence à l'administration
-                            pour activation (confirmation manuelle en attendant l'intégration automatique).
-                        </p>
+                        <div class="mt-2">
+                            <a href="{{ route('paydunya.initiate', $facture) }}" class="text-xs text-blue-600 hover:text-blue-800">
+                                Payer en ligne via PayDunya →
+                            </a>
+                        </div>
                     @endif
                 </li>
             @empty

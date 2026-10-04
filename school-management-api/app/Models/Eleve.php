@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 class Eleve extends Model
 {
-    use HasFactory, BelongsToEcole;
+    use BelongsToEcole, HasFactory;
 
     protected $fillable = [
         'ecole_id',
@@ -28,6 +29,7 @@ class Eleve extends Model
         'photo',
         'classe_id',
         'statut',
+        'inscrit_cantine',
         'date_inscription',
         'contact_urgence_nom',
         'contact_urgence_telephone',
@@ -36,11 +38,15 @@ class Eleve extends Model
     protected $casts = [
         'date_naissance' => 'date',
         'date_inscription' => 'date',
+        'inscrit_cantine' => 'boolean',
     ];
 
     public const STATUT_ACTIF = 'actif';
+
     public const STATUT_INACTIF = 'inactif';
+
     public const STATUT_DIPLOME = 'diplome';
+
     public const STATUT_EXCLU = 'exclu';
 
     public function user(): BelongsTo
@@ -75,6 +81,11 @@ class Eleve extends Model
         return $this->hasMany(Paiement::class);
     }
 
+    public function paiementsCantine(): HasMany
+    {
+        return $this->hasMany(PaiementCantine::class);
+    }
+
     public function bulletins(): HasMany
     {
         return $this->hasMany(Bulletin::class);
@@ -102,7 +113,7 @@ class Eleve extends Model
     /**
      * Moyenne par matière puis moyenne générale pondérée par le coefficient de chaque matière.
      *
-     * @return array{matieres: \Illuminate\Support\Collection, moyenne_generale: float|null}
+     * @return array{matieres: Collection, moyenne_generale: float|null}
      */
     public function bulletinDonnees(int $trimestreId): array
     {

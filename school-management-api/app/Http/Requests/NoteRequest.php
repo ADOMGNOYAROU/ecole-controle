@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -15,10 +16,10 @@ class NoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'eleve_id' => ['required', 'exists:eleves,id'],
-            'matiere_id' => ['required', 'exists:matieres,id'],
-            'classe_id' => ['required', 'exists:classes,id'],
-            'trimestre_id' => ['required', 'exists:trimestres,id'],
+            'eleve_id' => ['required', Tenant::exists('eleves')],
+            'matiere_id' => ['required', Tenant::exists('matieres')],
+            'classe_id' => ['required', Tenant::exists('classes')],
+            'trimestre_id' => ['required', Tenant::exists('trimestres')],
             'type' => ['required', Rule::in(['devoir', 'composition'])],
             'valeur' => ['required', 'numeric', 'min:0', 'lte:bareme'],
             'bareme' => ['required', 'numeric', 'min:1', 'max:100'],

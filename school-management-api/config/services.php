@@ -8,18 +8,21 @@ return [
     |--------------------------------------------------------------------------
     |
     | This file is for storing the credentials for third party services such
-    | as Mailgun, Postmark, AWS and more. This file provides the de facto
+    | as Mailgun, Postmark, AWS and more. This file provides a sane default
     | location for this type of information, allowing packages to have
     | a conventional file to locate the various service credentials.
     |
     */
 
-    'postmark' => [
-        'key' => env('POSTMARK_API_KEY'),
+    'mailgun' => [
+        'domain' => env('MAILGUN_DOMAIN'),
+        'secret' => env('MAILGUN_SECRET'),
+        'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'),
+        'scheme' => 'https',
     ],
 
-    'resend' => [
-        'key' => env('RESEND_API_KEY'),
+    'postmark' => [
+        'token' => env('POSTMARK_TOKEN'),
     ],
 
     'ses' => [
@@ -28,11 +31,18 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
-    'slack' => [
-        'notifications' => [
-            'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
-            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
-        ],
+    'paydunya' => [
+        'master_key' => env('PAYDUNYA_MASTER_KEY'),
+        'public_key' => env('PAYDUNYA_PUBLIC_KEY'),
+        'private_key' => env('PAYDUNYA_PRIVATE_KEY'),
+        'token' => env('PAYDUNYA_TOKEN'),
+        'mode' => env('PAYDUNYA_MODE', 'test'),
+        'recipient_name' => env('PAYDUNYA_RECIPIENT_NAME', 'joslin ADOM'),
+        'recipient_phone' => env('PAYDUNYA_RECIPIENT_PHONE', '98646779'),
+        'recipient_email' => env('PAYDUNYA_RECIPIENT_EMAIL', 'adomgnoyarou@gmail.com'),
+        // t-money-togo ou moov-togo (voir la doc PayDunya pour les autres pays)
+        'recipient_withdraw_mode' => env('PAYDUNYA_RECIPIENT_WITHDRAW_MODE', 'moov-togo'),
+        'redistribution_enabled' => (bool) env('PAYDUNYA_REDISTRIBUTION_ENABLED', false),
     ],
 
 ];

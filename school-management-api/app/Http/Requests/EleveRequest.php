@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -17,7 +18,7 @@ class EleveRequest extends FormRequest
         $eleve = $this->route('eleve');
 
         return [
-            'matricule' => ['required', 'string', 'max:50', Rule::unique('eleves', 'matricule')->ignore($eleve)],
+            'matricule' => ['required', 'string', 'max:50', Tenant::unique('eleves', 'matricule')->ignore($eleve)],
             'nom' => ['required', 'string', 'max:100'],
             'prenom' => ['required', 'string', 'max:100'],
             'sexe' => ['required', Rule::in(['M', 'F'])],
@@ -26,7 +27,7 @@ class EleveRequest extends FormRequest
             'adresse' => ['nullable', 'string', 'max:255'],
             'telephone' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:150'],
-            'classe_id' => ['nullable', 'exists:classes,id'],
+            'classe_id' => ['nullable', Tenant::exists('classes')],
             'statut' => ['required', Rule::in(['actif', 'inactif', 'diplome', 'exclu'])],
             'date_inscription' => ['required', 'date'],
             'contact_urgence_nom' => ['nullable', 'string', 'max:150'],

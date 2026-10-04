@@ -39,7 +39,7 @@ class EcoleSeeder extends Seeder
             'date_debut' => now()->subMonth(),
             'date_fin' => now()->addMonths(2),
             'statut' => 'actif',
-            'montant' => Ecole::TARIF_PREMIUM_TRIMESTRIEL,
+            'montant' => Ecole::TARIF_PREMIUM_2MOIS,
         ]);
 
         // Toutes les données de démo générées par les seeders suivants sont

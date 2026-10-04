@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class EnseignantRequest extends FormRequest
 {
@@ -22,9 +22,9 @@ class EnseignantRequest extends FormRequest
             'specialite' => ['nullable', 'string', 'max:150'],
             'date_embauche' => ['nullable', 'date'],
             'matieres' => ['nullable', 'array'],
-            'matieres.*' => ['exists:matieres,id'],
+            'matieres.*' => [Tenant::exists('matieres')],
             'classes' => ['nullable', 'array'],
-            'classes.*' => ['exists:classes,id'],
+            'classes.*' => [Tenant::exists('classes')],
         ];
     }
 }

@@ -35,16 +35,16 @@ class UserAccountController extends Controller
         $this->authorize('create', User::class);
 
         $request->validate([
-            'type'          => ['required', 'in:eleve,enseignant,tuteur'],
-            'id'            => ['required', 'integer'],
-            'mot_de_passe'  => ['nullable', 'string', 'min:6'],
-            'email_manuel'  => ['nullable', 'email'],
+            'type' => ['required', 'in:eleve,enseignant,tuteur'],
+            'id' => ['required', 'integer'],
+            'mot_de_passe' => ['nullable', 'string', 'min:6'],
+            'email_manuel' => ['nullable', 'email'],
         ]);
 
         $profil = match ($request->type) {
-            'eleve'      => Eleve::findOrFail($request->id),
+            'eleve' => Eleve::findOrFail($request->id),
             'enseignant' => Enseignant::findOrFail($request->id),
-            'tuteur'     => Tuteur::findOrFail($request->id),
+            'tuteur' => Tuteur::findOrFail($request->id),
         };
 
         // Priorité : email saisi manuellement > email du profil
@@ -54,17 +54,25 @@ class UserAccountController extends Controller
             return back()->with('error', "Cette personne n'a pas d'adresse email. Saisissez-en une manuellement.");
         }
 
+        if ($profil->user_id) {
+            return back()->with('error', 'Cette personne a déjà un compte.');
+        }
+
+        if (User::where('email', $email)->exists()) {
+            return back()->with('error', "L'adresse {$email} est déjà utilisée par un autre compte.");
+        }
+
         // Priorité : mot de passe saisi > mot de passe aléatoire
         $motDePasse = $request->filled('mot_de_passe')
             ? $request->mot_de_passe
             : $this->genererMotDePasse();
 
         $user = User::create([
-            'ecole_id'             => Auth::user()->ecole_id,
-            'name'                 => $profil->nomComplet(),
-            'email'                => $email,
-            'password'             => Hash::make($motDePasse),
-            'role'                 => $request->type === 'tuteur' ? User::ROLE_PARENT : $request->type,
+            'ecole_id' => Auth::user()->ecole_id,
+            'name' => $profil->nomComplet(),
+            'email' => $email,
+            'password' => Hash::make($motDePasse),
+            'role' => $request->type === 'tuteur' ? User::ROLE_PARENT : $request->type,
             'must_change_password' => ! $request->filled('mot_de_passe'),
         ]);
 
@@ -73,13 +81,13 @@ class UserAccountController extends Controller
         // Tentative d'envoi email (silencieuse si non configuré)
         try {
             Mail::to($user->email)->send(new UserAccountCreated([
-                'name'     => $user->name,
-                'email'    => $user->email,
+                'name' => $user->name,
+                'email' => $user->email,
                 'password' => $motDePasse,
-                'type'     => match ($request->type) {
-                    'eleve'      => 'Élève',
+                'type' => match ($request->type) {
+                    'eleve' => 'Élève',
                     'enseignant' => 'Enseignant',
-                    'tuteur'     => 'Parent',
+                    'tuteur' => 'Parent',
                 },
             ]));
         } catch (\Throwable) {
@@ -88,8 +96,8 @@ class UserAccountController extends Controller
 
         // Affichage des identifiants à l'écran (toujours, car email peut échouer)
         return back()->with('compte_cree', [
-            'name'     => $user->name,
-            'email'    => $user->email,
+            'name' => $user->name,
+            'email' => $user->email,
             'password' => $motDePasse,
         ]);
     }
@@ -107,24 +115,24 @@ class UserAccountController extends Controller
             : $this->genererMotDePasse();
 
         $user->update([
-            'password'             => Hash::make($motDePasse),
+            'password' => Hash::make($motDePasse),
             'must_change_password' => ! $request->filled('nouveau_mot_de_passe'),
         ]);
 
         try {
             Mail::to($user->email)->send(new UserAccountCreated([
-                'name'     => $user->name,
-                'email'    => $user->email,
+                'name' => $user->name,
+                'email' => $user->email,
                 'password' => $motDePasse,
-                'type'     => 'Réinitialisation',
+                'type' => 'Réinitialisation',
             ]));
         } catch (\Throwable) {
             // silencieux si email non configuré
         }
 
         return back()->with('compte_cree', [
-            'name'     => $user->name,
-            'email'    => $user->email,
+            'name' => $user->name,
+            'email' => $user->email,
             'password' => $motDePasse,
         ]);
     }

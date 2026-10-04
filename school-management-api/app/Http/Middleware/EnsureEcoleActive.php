@@ -13,7 +13,7 @@ class EnsureEcoleActive
     {
         $user = Auth::user();
 
-        if (! $user || $user->isSuperAdmin() || $request->routeIs('abonnement.*', 'logout')) {
+        if (! $user || $user->isSuperAdmin() || $request->routeIs('abonnement.*', 'paydunya.*', 'logout')) {
             return $next($request);
         }
 
