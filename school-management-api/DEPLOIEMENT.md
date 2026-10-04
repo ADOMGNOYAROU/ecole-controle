@@ -1,6 +1,6 @@
 # Déploiement — École Manager (Laravel)
 
-L'application est déployée sur **Render** sous forme d'image Docker (`Dockerfile`), avec une base **PostgreSQL**. Chaque modification passe par des tests automatiques (GitHub Actions) avant d'arriver sur `master`, et Render ne déploie `master` que lorsque ces tests sont verts.
+L'application est déployée sur **Render** sous forme d'image Docker (`Dockerfile`), avec une base **PostgreSQL hébergée chez Neon** (offre gratuite). Chaque modification passe par des tests automatiques (GitHub Actions) avant d'arriver sur `master`, et Render ne déploie `master` que lorsque ces tests sont verts.
 
 ## 1. Le circuit d'une modification
 
@@ -45,14 +45,16 @@ composer audit             # failles connues
 
 ## 3. Première mise en service sur Render
 
-1. Sur [render.com](https://render.com), **New → Blueprint**, choisir le dépôt `ecole-controle`. Render lit `render.yaml` et propose le service `ecole-manager` et la base `ecole-manager-db`.
-2. Renseigner les variables marquées « à remplir » (`sync: false`) :
-   - `APP_URL` : l'adresse donnée par Render (`https://ecole-manager-xxxx.onrender.com`) ou votre domaine ;
+1. **Créer la base chez Neon** : sur [neon.com](https://neon.com), créer un projet (région Europe si proposée), puis copier l'adresse de connexion **directe** (option « Connection pooling » désactivée). Elle ressemble à `postgresql://utilisateur:motdepasse@ep-xxxx.eu-central-1.aws.neon.tech/neondb?sslmode=require`.
+2. Sur [render.com](https://render.com), **New → Blueprint** (ou **Manual sync** si le Blueprint existe), dépôt `ecole-controle`. Render lit `render.yaml` et propose le service `ecole-manager`.
+3. Renseigner les variables marquées « à remplir » (`sync: false`) :
+   - `DB_URL` : l'adresse de connexion Neon de l'étape 1 ;
+   - `APP_URL` : votre domaine ; laissé vide, l'adresse fournie par Render (`https://ecole-manager-xxxx.onrender.com`) est utilisée ;
    - `PAYDUNYA_*` : clés de test d'abord ;
    - `MAIL_*` : un serveur SMTP, sinon aucun e-mail n'est envoyé.
-3. Lancer le déploiement. Au démarrage, le conteneur met la configuration en cache, applique les migrations et lance le planificateur des rappels de paiement.
-4. Créer le compte super_admin depuis l'onglet **Shell** du service : `php artisan create:admin`.
-5. Vérifier : `php artisan app:verifier-deploiement` dans le même Shell.
+4. Lancer le déploiement. Au démarrage, le conteneur met la configuration en cache, applique les migrations et lance le planificateur des rappels de paiement.
+5. Créer le compte super_admin depuis l'onglet **Shell** du service : `php artisan create:admin`.
+6. Vérifier : `php artisan app:verifier-deploiement` dans le même Shell.
 
 Dans les réglages du service, **Auto-Deploy** doit être sur « After CI Checks Pass » (c'est ce que fixe `autoDeployTrigger: checksPass`).
 
@@ -61,10 +63,10 @@ Dans les réglages du service, **Auto-Deploy** doit être sur « After CI Checks
 | Limite | Conséquence | Solution |
 |---|---|---|
 | Le service gratuit s'endort après 15 minutes sans visite | La première page après une pause met environ une minute à s'afficher | Plan payant avant d'avoir des écoles clientes |
-| **La base PostgreSQL gratuite expire 30 jours après sa création** | Toutes les données sont perdues | Passer la base en plan payant **avant** d'y mettre de vraies écoles |
+| Une seule base PostgreSQL gratuite par compte Render, supprimée après 30 jours | Impossible d'en créer une 2e ; données perdues au bout de 30 jours | La base est chez **Neon** (gratuite, 1 Go, sans expiration annoncée ; mise en veille après 5 minutes d'inactivité, réveil à la connexion suivante) |
 | Pas de cron job gratuit | — | Le planificateur tourne dans le conteneur (`schedule:work`), mais il s'arrête quand le service s'endort |
 
-Pour la phase de démonstration, l'offre gratuite suffit. Pour de vraies écoles : service web et base en plan payant.
+Pour la phase de démonstration, l'offre gratuite suffit. Pour de vraies écoles : service web Render en plan Starter (7 $/mois), et surveiller l'espace utilisé chez Neon (1 Go gratuit).
 
 ## 5. Contrôle de la configuration : `php artisan app:verifier-deploiement`
 
