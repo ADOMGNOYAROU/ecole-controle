@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
 
 class TuteurRequest extends FormRequest
@@ -21,7 +22,7 @@ class TuteurRequest extends FormRequest
             'profession' => ['nullable', 'string', 'max:150'],
             'adresse' => ['nullable', 'string', 'max:255'],
             'eleves' => ['nullable', 'array'],
-            'eleves.*.id' => ['exists:eleves,id'],
+            'eleves.*.id' => [Tenant::exists('eleves')],
             'eleves.*.lien_parente' => ['required_with:eleves.*.id', 'string', 'max:50'],
         ];
     }

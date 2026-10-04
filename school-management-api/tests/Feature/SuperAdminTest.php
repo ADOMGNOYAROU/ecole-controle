@@ -54,7 +54,7 @@ class SuperAdminTest extends TestCase
 
         $facture = Facture::create([
             'ecole_id' => $ecole->id,
-            'montant' => Ecole::TARIF_PREMIUM_TRIMESTRIEL,
+            'montant' => Ecole::TARIF_PREMIUM_2MOIS,
             'date_echeance' => now()->addDays(7),
             'statut' => Facture::STATUT_EN_ATTENTE,
         ]);

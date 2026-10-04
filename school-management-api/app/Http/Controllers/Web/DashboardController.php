@@ -17,6 +17,8 @@ use App\Services\ProgressionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Random\Engine\Mt19937;
+use Random\Randomizer;
 
 class DashboardController extends Controller
 {
@@ -95,16 +97,16 @@ class DashboardController extends Controller
             ->get();
 
         return view('dashboards.admin', [
-            'stats'               => $stats,
-            'deltas'              => $deltas,
-            'sparklines'          => $sparklines,
-            'tauxPresenceGlobal'  => $tauxPresenceGlobal,
-            'dernieresNotes'      => $dernieresNotes,
-            'annonces'            => $annonces,
-            'trimestre'           => $trimestre,
-            'apercuRapide'        => $apercuRapide,
+            'stats' => $stats,
+            'deltas' => $deltas,
+            'sparklines' => $sparklines,
+            'tauxPresenceGlobal' => $tauxPresenceGlobal,
+            'dernieresNotes' => $dernieresNotes,
+            'annonces' => $annonces,
+            'trimestre' => $trimestre,
+            'apercuRapide' => $apercuRapide,
             'prochainesEcheances' => $prochainesEcheances,
-            'elevesARisque'       => $elevesARisque,
+            'elevesARisque' => $elevesARisque,
         ]);
     }
 
@@ -117,7 +119,7 @@ class DashboardController extends Controller
      */
     private function tendanceIndicative(int $valeurActuelle, string $graine): array
     {
-        $randomizer = new \Random\Randomizer(new \Random\Engine\Mt19937(crc32($graine)));
+        $randomizer = new Randomizer(new Mt19937(crc32($graine)));
         $tirer = fn (int $min, int $max) => $randomizer->getInt($min, $max);
 
         $points = [];

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Presence extends Model
 {
-    use HasFactory, BelongsToEcole;
+    use BelongsToEcole, HasFactory;
 
     protected $fillable = [
         'ecole_id',
@@ -27,7 +27,9 @@ class Presence extends Model
     ];
 
     public const STATUT_PRESENT = 'present';
+
     public const STATUT_ABSENT = 'absent';
+
     public const STATUT_RETARD = 'retard';
 
     public function eleve(): BelongsTo

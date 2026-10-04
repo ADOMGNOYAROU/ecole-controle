@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Paiement extends Model
 {
-    use HasFactory, BelongsToEcole;
+    use BelongsToEcole, HasFactory;
 
     protected $fillable = [
         'ecole_id',
@@ -22,6 +22,7 @@ class Paiement extends Model
         'date_paiement',
         'statut',
         'commentaire',
+        'dernier_rappel_le',
     ];
 
     protected $casts = [
@@ -29,11 +30,15 @@ class Paiement extends Model
         'montant_paye' => 'decimal:2',
         'date_echeance' => 'date',
         'date_paiement' => 'date',
+        'dernier_rappel_le' => 'datetime',
     ];
 
     public const STATUT_EN_ATTENTE = 'en_attente';
+
     public const STATUT_PARTIEL = 'partiel';
+
     public const STATUT_PAYE = 'paye';
+
     public const STATUT_RETARD = 'retard';
 
     public function eleve(): BelongsTo

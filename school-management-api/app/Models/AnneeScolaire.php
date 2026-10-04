@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AnneeScolaire extends Model
 {
-    use HasFactory, BelongsToEcole;
+    use BelongsToEcole, HasFactory;
 
     protected $table = 'annees_scolaires';
 

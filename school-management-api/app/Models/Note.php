@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Note extends Model
 {
-    use HasFactory, BelongsToEcole;
+    use BelongsToEcole, HasFactory;
 
     protected $fillable = [
         'ecole_id',

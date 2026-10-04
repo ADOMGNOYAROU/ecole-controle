@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class AnneeScolaireRequest extends FormRequest
 {
@@ -14,10 +14,10 @@ class AnneeScolaireRequest extends FormRequest
 
     public function rules(): array
     {
-        $anneeScolaire = $this->route('annee_scolaire');
+        $anneeScolaire = $this->route('anneeScolaire');
 
         return [
-            'libelle' => ['required', 'string', 'max:20', Rule::unique('annees_scolaires', 'libelle')->ignore($anneeScolaire)],
+            'libelle' => ['required', 'string', 'max:20', Tenant::unique('annees_scolaires', 'libelle')->ignore($anneeScolaire)],
             'date_debut' => ['required', 'date'],
             'date_fin' => ['required', 'date', 'after:date_debut'],
             'active' => ['boolean'],

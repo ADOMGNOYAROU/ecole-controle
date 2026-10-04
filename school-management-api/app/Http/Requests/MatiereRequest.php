@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class MatiereRequest extends FormRequest
 {
@@ -18,7 +18,7 @@ class MatiereRequest extends FormRequest
 
         return [
             'nom' => ['required', 'string', 'max:100'],
-            'code' => ['required', 'string', 'max:20', Rule::unique('matieres', 'code')->ignore($matiere)],
+            'code' => ['required', 'string', 'max:20', Tenant::unique('matieres', 'code')->ignore($matiere)],
             'coefficient_defaut' => ['required', 'numeric', 'min:0.5', 'max:10'],
         ];
     }

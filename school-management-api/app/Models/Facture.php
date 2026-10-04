@@ -2,17 +2,21 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Facture extends Model
 {
-    use HasFactory;
+    use BelongsToEcole, HasFactory;
 
     public const STATUT_EN_ATTENTE = 'en_attente';
+
     public const STATUT_PAYEE = 'payee';
+
     public const STATUT_EN_RETARD = 'en_retard';
+
     public const STATUT_ANNULEE = 'annulee';
 
     protected $fillable = [
@@ -67,7 +71,7 @@ class Facture extends Model
 
         if (! $abonnement) {
             $dateDebut = now();
-            $dateFin = now()->addMonths(3);
+            $dateFin = now()->addMonths(2);
 
             $abonnement = Abonnement::create([
                 'ecole_id' => $this->ecole_id,
@@ -83,7 +87,7 @@ class Facture extends Model
             $abonnement->update([
                 'statut' => 'actif',
                 'date_debut' => now(),
-                'date_fin' => now()->addMonths(3),
+                'date_fin' => now()->addMonths(2),
             ]);
         }
 
