@@ -17,6 +17,24 @@ if [ -z "$APP_URL" ] && [ -n "$RENDER_EXTERNAL_URL" ]; then
     export APP_URL="$RENDER_EXTERNAL_URL"
 fi
 
+# Variables de base collées depuis un navigateur : on retire espaces, retours à la ligne
+# et « _ » parasites en fin de valeur (un « sslmode=require_ » empêche la connexion).
+if [ -n "$DB_URL" ]; then
+    DB_URL_PROPRE=$(printf '%s' "$DB_URL" | tr -d '[:space:]' | sed 's/_*$//')
+    if [ "$DB_URL_PROPRE" != "$DB_URL" ]; then
+        echo "DB_URL : caractères parasites retirés en fin de valeur."
+    fi
+    export DB_URL="$DB_URL_PROPRE"
+    # Seule la partie après le dernier « / » est affichée : jamais le mot de passe.
+    echo "DB_URL se termine par : ${DB_URL##*/}"
+fi
+for VAR in DB_HOST DB_PORT DB_DATABASE DB_USERNAME DB_SSLMODE; do
+    VALEUR=$(eval "printf '%s' \"\${$VAR:-}\"" | tr -d '[:space:]')
+    if [ -n "$VALEUR" ]; then
+        export "$VAR=$VALEUR"
+    fi
+done
+
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
