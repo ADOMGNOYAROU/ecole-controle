@@ -12,6 +12,11 @@ if [ -n "$APP_KEY" ] && [ "${APP_KEY#base64:}" = "$APP_KEY" ]; then
     export APP_KEY="base64:${APP_KEY}"
 fi
 
+# Sans APP_URL renseigné, on prend l'adresse publique fournie par Render.
+if [ -z "$APP_URL" ] && [ -n "$RENDER_EXTERNAL_URL" ]; then
+    export APP_URL="$RENDER_EXTERNAL_URL"
+fi
+
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
