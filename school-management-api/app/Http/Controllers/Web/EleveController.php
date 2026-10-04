@@ -26,8 +26,8 @@ class EleveController extends Controller
             ->withQueryString();
 
         return view('eleves.index', [
-            'eleves'           => $eleves,
-            'classes'          => Classe::orderBy('nom')->get(),
+            'eleves' => $eleves,
+            'classes' => Classe::orderBy('nom')->get(),
             'elevesARisqueIds' => ProgressionService::idsElevesARisque(),
         ]);
     }
@@ -96,12 +96,12 @@ class EleveController extends Controller
         $enRisque = $moyenne !== null && $moyenne < ProgressionService::SEUIL_RISQUE;
 
         return view('eleves.show', [
-            'eleve'          => $eleve,
-            'trimestre'      => $trimestre,
-            'moyenne'        => $moyenne,
-            'tauxPresence'   => $trimestre ? $eleve->tauxPresenceTrimestre($trimestre->id) : null,
+            'eleve' => $eleve,
+            'trimestre' => $trimestre,
+            'moyenne' => $moyenne,
+            'tauxPresence' => $trimestre ? $eleve->tauxPresenceTrimestre($trimestre->id) : null,
             'dernieresNotes' => $eleve->notes()->with('matiere')->latest()->take(10)->get(),
-            'enRisque'       => $enRisque,
+            'enRisque' => $enRisque,
         ]);
     }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Abonnement;
 use App\Models\Ecole;
 use App\Models\Facture;
 use Illuminate\View\View;
@@ -21,8 +22,8 @@ class DashboardController extends Controller
             'nouvelles_ce_mois' => Ecole::where('created_at', '>=', $debutMois)->count(),
         ];
 
-        $abonnementsActifs = \App\Models\Abonnement::where('statut', 'actif')->where('date_fin', '>=', now())->count();
-        $mrrEstime = round(($abonnementsActifs * Ecole::TARIF_PREMIUM_TRIMESTRIEL) / 3);
+        $abonnementsActifs = Abonnement::where('statut', 'actif')->where('date_fin', '>=', now())->count();
+        $mrrEstime = round(($abonnementsActifs * Ecole::TARIF_PREMIUM_2MOIS) / 3);
 
         $revenuCeMois = Facture::where('statut', Facture::STATUT_PAYEE)
             ->where('payee_le', '>=', $debutMois)

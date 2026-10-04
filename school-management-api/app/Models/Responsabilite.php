@@ -21,7 +21,7 @@ class Responsabilite extends Model
         'statut',
         'classe_id',
         'matiere_id',
-        'commentaires'
+        'commentaires',
     ];
 
     protected $casts = [
@@ -31,14 +31,20 @@ class Responsabilite extends Model
 
     // Types de responsabilités
     public const TYPE_COURS = 'cours';
+
     public const TYPE_SURVEILLANCE = 'surveillance';
+
     public const TYPE_ACTIVITE = 'activite';
+
     public const TYPE_COMMISSION = 'commission';
+
     public const TYPE_AUTRE = 'autre';
 
     // Statuts
     public const STATUT_ACTIF = 'actif';
+
     public const STATUT_TERMINE = 'termine';
+
     public const STATUT_ANNULE = 'annule';
 
     /**
@@ -100,11 +106,11 @@ class Responsabilite extends Model
     /**
      * Marquer comme annulé
      */
-    public function marquerAnnulee(string $raison = null): void
+    public function marquerAnnulee(?string $raison = null): void
     {
         $this->update([
             'statut' => self::STATUT_ANNULE,
-            'commentaires' => $raison ? ($this->commentaires . "\nAnnulé: " . $raison) : $this->commentaires
+            'commentaires' => $raison ? ($this->commentaires."\nAnnulé: ".$raison) : $this->commentaires,
         ]);
     }
 }

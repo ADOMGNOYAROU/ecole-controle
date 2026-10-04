@@ -96,7 +96,7 @@ prévue dans une phase ultérieure (voir §11.2).
 | Plan | Tarif | Contenu |
 |---|---|---|
 | **Gratuit** | 0 FCFA, illimité dans le temps et en volume | Gestion des classes, élèves, enseignants, matières, notes, présences, emploi du temps. Le cœur de gestion d'une école, sans restriction de durée ni de nombre d'élèves. |
-| **Premium** | 15 000 FCFA / trimestre (≈ 45 000 FCFA / an), tarif unique quelle que soit la taille de l'école | Tout le plan Gratuit, plus : bulletins PDF (moyenne, rang, appréciation automatiques), suivi des paiements de scolarité, annonces et notifications, espaces self-service élève et parent, gestion des comptes utilisateurs (provisioning élèves/enseignants/parents). |
+| **Premium** | 25 000 FCFA / 2 mois (≈ 150 000 FCFA / an), tarif unique quelle que soit la taille de l'école | Tout le plan Gratuit, plus : bulletins PDF (moyenne, rang, appréciation automatiques), suivi des paiements de scolarité, annonces et notifications, espaces self-service élève et parent, gestion des comptes utilisateurs (provisioning élèves/enseignants/parents). |
 
 **Justification du choix freemium** (plutôt que des paliers tarifaires par effectif) : simplicité
 de vente et de compréhension dans un marché peu habitué aux logiciels payants ; le plan Gratuit
@@ -111,12 +111,12 @@ sert de produit d'appel et de preuve de valeur avant la conversion au Premium.
 
 ### 4.3 Facturation
 
-- **Cycle trimestriel**, aligné sur le rythme réel d'encaissement des frais de scolarité par les
+- **Cycle bimestriel (2 mois)**, aligné sur le rythme réel d'encaissement des frais de scolarité par les
   écoles togolaises (plutôt qu'un cycle mensuel, inadapté à leur trésorerie).
 - Une **Facture** est un document numérique (statuts : en attente, payée, en retard, annulée)
-  associée à une école et, une fois payée, à un **Abonnement** (période de 3 mois avec date de
+  associée à une école et, une fois payée, à un **Abonnement** (période de 2 mois avec date de
   début/fin).
-- Montant fixe : 15 000 FCFA par facture/trimestre (configurable sans migration de base de
+- Montant fixe : 25 000 FCFA par facture/2 mois (configurable sans migration de base de
   données).
 
 ### 4.4 Modalités de paiement

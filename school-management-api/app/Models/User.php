@@ -21,11 +21,14 @@ class User extends Authenticatable
      * boucle infinie. Le filtrage par école se fait explicitement où nécessaire
      * (ex: UserAccountController::index()).
      */
-
     public const ROLE_SUPER_ADMIN = 'super_admin';
+
     public const ROLE_ADMIN = 'admin';
+
     public const ROLE_ENSEIGNANT = 'enseignant';
+
     public const ROLE_ELEVE = 'eleve';
+
     public const ROLE_PARENT = 'parent';
 
     protected $fillable = [

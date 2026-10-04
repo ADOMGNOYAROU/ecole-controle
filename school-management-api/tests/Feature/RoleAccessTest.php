@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Ecole;
 use App\Models\Eleve;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -59,7 +60,7 @@ class RoleAccessTest extends TestCase
 
     public function test_free_plan_ecole_is_redirected_from_premium_routes(): void
     {
-        $admin = User::factory()->admin()->for(\App\Models\Ecole::factory()->gratuit(), 'ecole')->create();
+        $admin = User::factory()->admin()->for(Ecole::factory()->gratuit(), 'ecole')->create();
 
         $this->actingAs($admin)->get('/comptes')->assertRedirect('/abonnement');
     }

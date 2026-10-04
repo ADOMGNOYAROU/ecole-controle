@@ -5,21 +5,24 @@ use App\Http\Controllers\Web\AnneeScolaireController;
 use App\Http\Controllers\Web\AnnonceController;
 use App\Http\Controllers\Web\Auth\LoginController;
 use App\Http\Controllers\Web\BulletinController;
+use App\Http\Controllers\Web\CantineController;
 use App\Http\Controllers\Web\ClasseController;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\EleveController;
 use App\Http\Controllers\Web\EmploiDuTempsController;
-use App\Http\Controllers\Web\ProgressionController;
 use App\Http\Controllers\Web\EnseignantController;
 use App\Http\Controllers\Web\EspaceEleveController;
 use App\Http\Controllers\Web\EspaceParentController;
 use App\Http\Controllers\Web\InscriptionController;
 use App\Http\Controllers\Web\MatiereController;
+use App\Http\Controllers\Web\MessagerieController;
 use App\Http\Controllers\Web\NoteController;
 use App\Http\Controllers\Web\NotificationController;
 use App\Http\Controllers\Web\PaiementController;
+use App\Http\Controllers\Web\PayDunyaController;
 use App\Http\Controllers\Web\PresenceController;
 use App\Http\Controllers\Web\ProfileController;
+use App\Http\Controllers\Web\ProgressionController;
 use App\Http\Controllers\Web\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use App\Http\Controllers\Web\SuperAdmin\EcoleController as SuperAdminEcoleController;
 use App\Http\Controllers\Web\SuperAdmin\FactureController as SuperAdminFactureController;
@@ -36,8 +39,11 @@ Route::middleware('guest')->group(function () {
     Route::post('/inscription', [InscriptionController::class, 'store'])->name('inscription.store');
 });
 
+// Webhook PayDunya (public - appelé par PayDunya sans authentification)
+Route::post('/paydunya/webhook', [PayDunyaController::class, 'webhook'])->name('paydunya.webhook');
+
 Route::middleware('auth')->group(function () {
-    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+    Route::match(['get', 'post'], '/logout', [LoginController::class, 'logout'])->name('logout');
 
     Route::get('/', fn () => redirect()->route('dashboard'));
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -53,6 +59,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/souscrire', [AbonnementController::class, 'souscrire'])->name('souscrire');
     });
 
+    // PayDunya - Paiement en ligne
+    Route::middleware('role:admin')->prefix('paydunya')->name('paydunya.')->group(function () {
+        Route::get('/initier/{facture}', [PayDunyaController::class, 'initiate'])->name('initiate');
+        Route::get('/succes/{facture}', [PayDunyaController::class, 'success'])->name('success');
+        Route::get('/annuler/{facture}', [PayDunyaController::class, 'cancel'])->name('cancel');
+    });
+
     Route::get('/emploi-du-temps/{classe?}', [EmploiDuTempsController::class, 'index'])->name('emploi-du-temps.index');
 
     // Fonctionnalités Premium : notifications, annonces, bulletins, paiements,
@@ -63,6 +76,12 @@ Route::middleware('auth')->group(function () {
         Route::patch('/notifications/lues', [NotificationController::class, 'marquerToutesLues'])->name('notifications.toutes-lues');
 
         Route::get('/annonces', [AnnonceController::class, 'index'])->name('annonces.index');
+
+        Route::middleware('role:enseignant,parent')->prefix('messagerie')->name('messagerie.')->group(function () {
+            Route::get('/', [MessagerieController::class, 'index'])->name('index');
+            Route::get('/{utilisateur}', [MessagerieController::class, 'show'])->name('show');
+            Route::post('/{utilisateur}', [MessagerieController::class, 'store'])->name('store');
+        });
 
         Route::middleware('role:eleve')->prefix('mon-espace')->name('mon-espace.')->group(function () {
             Route::get('/notes', [EspaceEleveController::class, 'notes'])->name('notes');
@@ -100,6 +119,11 @@ Route::middleware('auth')->group(function () {
         Route::middleware('role:admin')->group(function () {
             Route::resource('paiements', PaiementController::class)->except('show');
             Route::get('/paiements/rapport', [PaiementController::class, 'rapport'])->name('paiements.rapport');
+            Route::get('/cantine', [CantineController::class, 'index'])->name('cantine.index');
+            Route::get('/cantine/parametres', [CantineController::class, 'parametres'])->name('cantine.parametres');
+            Route::put('/cantine/parametres', [CantineController::class, 'enregistrerParametres'])->name('cantine.parametres.update');
+            Route::post('/cantine/eleves/{eleve}/payer', [CantineController::class, 'payer'])->name('cantine.payer');
+            Route::delete('/cantine/paiements/{paiementCantine}', [CantineController::class, 'annuler'])->name('cantine.annuler');
 
             Route::get('/comptes', [UserAccountController::class, 'index'])->name('comptes.index');
             Route::post('/comptes/generer', [UserAccountController::class, 'generer'])->name('comptes.generer');
@@ -130,7 +154,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('eleves', EleveController::class)->except(['index', 'show'])->parameters(['eleves' => 'eleve']);
         Route::resource('enseignants', EnseignantController::class);
         Route::resource('classes', ClasseController::class)->except(['index', 'show'])->parameters(['classes' => 'classe']);
-        Route::resource('matieres', MatiereController::class);
+        Route::resource('matieres', MatiereController::class)->except('show');
         Route::resource('tuteurs', TuteurController::class);
 
         Route::resource('annees-scolaires', AnneeScolaireController::class)->only(['index', 'store', 'update', 'destroy'])->parameters(['annees-scolaires' => 'anneeScolaire']);

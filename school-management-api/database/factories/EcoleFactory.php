@@ -7,7 +7,7 @@ use App\Models\Ecole;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Ecole>
+ * @extends Factory<Ecole>
  */
 class EcoleFactory extends Factory
 {
@@ -23,7 +23,7 @@ class EcoleFactory extends Factory
                     'date_debut' => now()->subMonth(),
                     'date_fin' => now()->addMonths(2),
                     'statut' => 'actif',
-                    'montant' => Ecole::TARIF_PREMIUM_TRIMESTRIEL,
+                    'montant' => Ecole::TARIF_PREMIUM_2MOIS,
                 ]);
             }
         });
