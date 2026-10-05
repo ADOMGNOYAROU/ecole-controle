@@ -11,6 +11,13 @@
     </div>
 </div>
 
+@if($recuPaiement)
+    <div class="card p-4 mb-4 border-green-200 bg-green-50 flex flex-wrap items-center justify-between gap-3">
+        <p class="text-sm text-green-900">Paiement enregistré pour <strong>{{ $recuPaiement->eleve->nomComplet() }}</strong> : remettez ou envoyez le reçu {{ $recuPaiement->numeroRecu() }}.</p>
+        <x-recu-actions :paiement="$recuPaiement" grand />
+    </div>
+@endif
+
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
     <div class="card p-5"><p class="text-sm text-slate-500">Total attendu</p><p class="text-2xl font-semibold">{{ number_format($stats['total_attendu'], 0, ',', ' ') }} F</p></div>
     <div class="card p-5"><p class="text-sm text-slate-500">Total collecté</p><p class="text-2xl font-semibold text-green-600">{{ number_format($stats['total_collecte'], 0, ',', ' ') }} F</p></div>
@@ -34,7 +41,7 @@
                     <td>{{ number_format($paiement->montant_paye, 0, ',', ' ') }} F</td>
                     <td class="text-slate-500">{{ $paiement->date_echeance->format('d/m/Y') }}</td>
                     <td><span class="badge-{{ match($paiement->statut) { 'paye' => 'green', 'partiel' => 'yellow', 'retard' => 'red', default => 'slate' } }}">{{ $paiement->statut }}</span></td>
-                    <td class="text-right whitespace-nowrap"><x-action-link :href="route('paiements.edit', $paiement)" type="edit">Modifier</x-action-link></td>
+                    <td class="text-right whitespace-nowrap"><span class="inline-flex items-center gap-3"><x-recu-actions :paiement="$paiement" /><x-action-link :href="route('paiements.edit', $paiement)" type="edit">Modifier</x-action-link></span></td>
                 </tr>
             @empty
                 <tr><td colspan="7" class="text-center text-slate-400 py-6">Aucun paiement.</td></tr>

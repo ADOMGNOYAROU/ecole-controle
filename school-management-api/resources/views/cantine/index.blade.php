@@ -42,9 +42,9 @@
 @endif
 
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-    <div class="card p-5"><p class="text-sm text-slate-500">Prix d'un jour</p><p class="text-2xl font-semibold">{{ $prix !== null ? number_format($prix, 0, ',', ' ').' F' : '—' }}</p></div>
+    <div class="card p-5"><p class="text-sm text-slate-500">Prix</p><p class="text-2xl font-semibold">{{ $prix !== null ? number_format($prix, 0, ',', ' ').' F' : '—' }}<span class="text-sm font-normal text-slate-500"> / jour</span></p>@if($prixMois !== null)<p class="text-sm text-slate-500">{{ number_format($prixMois, 0, ',', ' ') }} F / mois</p>@endif</div>
     <div class="card p-5"><p class="text-sm text-slate-500">Pas encore payé</p><p class="text-2xl font-semibold text-red-600">{{ $nonPayes->count() }}</p></div>
-    <div class="card p-5"><p class="text-sm text-slate-500">Payé</p><p class="text-2xl font-semibold text-green-600">{{ $payes->count() }}</p></div>
+    <div class="card p-5"><p class="text-sm text-slate-500">Payé</p><p class="text-2xl font-semibold text-green-600">{{ $payes->count() + $abonnes->count() }}</p>@if($abonnes->isNotEmpty())<p class="text-sm text-slate-500">dont {{ $abonnes->count() }} au mois</p>@endif</div>
     <div class="card p-5"><p class="text-sm text-slate-500">Encaissé {{ $libelleJour }}</p><p class="text-2xl font-semibold">{{ number_format($payes->sum('montant'), 0, ',', ' ') }} F</p></div>
 </div>
 
@@ -68,16 +68,24 @@
                             </div>
                         </td>
                         <td class="text-right">
-                            <form method="POST" action="{{ route('cantine.payer', [$eleve] + $filtres) }}">
-                                @csrf
-                                <button type="submit" class="btn-primary" @disabled($prix === null)>✓ Payé</button>
-                            </form>
+                            <div class="inline-flex flex-wrap justify-end gap-2">
+                                <form method="POST" action="{{ route('cantine.payer', [$eleve] + $filtres) }}">
+                                    @csrf
+                                    <button type="submit" class="btn-primary" @disabled($prix === null)>✓ Payé</button>
+                                </form>
+                                @if($prixMois !== null)
+                                    <form method="POST" action="{{ route('cantine.payer-mois', [$eleve] + $filtres) }}">
+                                        @csrf
+                                        <button type="submit" class="btn-secondary" title="Payé pour tout le mois : l'élève ne réapparaîtra plus ce mois-ci">Payé pour le mois</button>
+                                    </form>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
                         <td colspan="2" class="text-center text-slate-500 py-8">
-                            @if($payes->isNotEmpty())
+                            @if($payes->isNotEmpty() || $abonnes->isNotEmpty())
                                 Tout le monde a payé {{ $libelleJour }}.
                             @else
                                 Aucun élève inscrit à la cantine. <a href="{{ route('cantine.parametres') }}" class="text-brand-700 font-medium underline">Inscrire des élèves</a>
@@ -100,14 +108,45 @@
                         <p class="font-medium text-slate-900">{{ $paiement->eleve->nomComplet() }}</p>
                         <p class="text-xs text-slate-500">{{ $paiement->eleve->classe?->nom }} · {{ number_format($paiement->montant, 0, ',', ' ') }} F · {{ $paiement->created_at->format('H:i') }}</p>
                     </div>
-                    <form method="POST" action="{{ route('cantine.annuler', [$paiement] + $filtres) }}" onsubmit="return confirm('Annuler ce paiement ? L\'élève reviendra dans la liste des non payés.')">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="text-xs text-red-600 hover:underline">Annuler</button>
-                    </form>
+                    <div class="flex items-center gap-3 shrink-0">
+                        @foreach($paiement->eleve->tuteurs->filter(fn ($t) => \App\Support\WhatsApp::numeroInternational($t->telephone)) as $tuteur)
+                            <a href="{{ $paiement->lienWhatsApp($tuteur) }}" target="_blank" rel="noopener" class="text-xs font-medium text-green-700 hover:underline" title="Confirmer à {{ $tuteur->prenom }} sur WhatsApp">WhatsApp</a>
+                        @endforeach
+                        <form method="POST" action="{{ route('cantine.annuler', [$paiement] + $filtres) }}" onsubmit="return confirm('Annuler ce paiement ? L\'élève reviendra dans la liste des non payés.')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-xs text-red-600 hover:underline">Annuler</button>
+                        </form>
+                    </div>
                 </li>
             @empty
                 <li class="px-4 py-6 text-center text-slate-400">Aucun paiement enregistré.</li>
+            @endforelse
+        </ul>
+
+        <div class="p-4 border-y border-slate-100">
+            <h2 class="font-semibold text-slate-900">Payé pour {{ $mois->locale('fr')->translatedFormat('F Y') }} ({{ $abonnes->count() }})</h2>
+        </div>
+        <ul class="divide-y divide-slate-100">
+            @forelse($abonnes as $abonnement)
+                <li class="px-4 py-3 flex items-center justify-between gap-3">
+                    <div>
+                        <p class="font-medium text-slate-900">{{ $abonnement->eleve->nomComplet() }}</p>
+                        <p class="text-xs text-slate-500">{{ $abonnement->eleve->classe?->nom }} · {{ number_format($abonnement->montant, 0, ',', ' ') }} F · mois entier</p>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        @foreach($abonnement->eleve->tuteurs->filter(fn ($t) => \App\Support\WhatsApp::numeroInternational($t->telephone)) as $tuteur)
+                            <a href="{{ $abonnement->lienWhatsApp($tuteur) }}" target="_blank" rel="noopener" class="text-xs font-medium text-green-700 hover:underline" title="Confirmer à {{ $tuteur->prenom }} sur WhatsApp">WhatsApp</a>
+                        @endforeach
+                        <form method="POST" action="{{ route('cantine.annuler-mois', [$abonnement] + $filtres) }}" onsubmit="return confirm('Annuler le paiement du mois ? L\'élève reviendra dans la liste.')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-xs text-red-600 hover:underline">Annuler</button>
+                        </form>
+                    </div>
+                </li>
+            @empty
+                <li class="px-4 py-6 text-center text-slate-400">Aucun paiement au mois.</li>
             @endforelse
         </ul>
     </div>

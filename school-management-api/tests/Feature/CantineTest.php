@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\AbonnementCantine;
 use App\Models\AnneeScolaire;
 use App\Models\Classe;
 use App\Models\Eleve;
 use App\Models\PaiementCantine;
+use App\Models\Tuteur;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -133,6 +135,79 @@ class CantineTest extends TestCase
 
         $this->actingAs($enseignant)->get('/cantine')->assertForbidden();
         $this->post("/cantine/eleves/{$this->ama->id}/payer")->assertForbidden();
+    }
+
+    public function test_payer_pour_le_mois_retire_l_eleve_de_chaque_jour_du_mois(): void
+    {
+        $this->actingAs($this->admin)->put('/cantine/parametres', [
+            'prix_cantine' => 300,
+            'prix_cantine_mois' => 6000,
+            'eleves' => [$this->ama->id, $this->kofi->id],
+        ])->assertSessionHasNoErrors();
+
+        $this->post("/cantine/eleves/{$this->ama->id}/payer-mois")->assertRedirect('/cantine')->assertSessionHas('success');
+
+        $abonnement = AbonnementCantine::sole();
+        $this->assertSame('2026-10-01', $abonnement->mois->toDateString());
+        $this->assertEquals(6000, $abonnement->montant);
+
+        // Absente de la liste aujourd'hui et un autre jour d'octobre…
+        $this->assertSame(['Kofi'], $this->get('/cantine')->viewData('nonPayes')->pluck('prenom')->all());
+        $this->assertSame(['Kofi'], $this->get('/cantine?date=2026-10-28')->viewData('nonPayes')->pluck('prenom')->all());
+        $this->assertSame(1, $this->get('/cantine')->viewData('abonnes')->count());
+
+        // …mais de retour en novembre
+        $this->assertSame(['Ama', 'Kofi'], $this->get('/cantine?date=2026-11-02')->viewData('nonPayes')->pluck('prenom')->all());
+
+        // Payer deux fois le même mois ne crée pas de doublon
+        $this->post("/cantine/eleves/{$this->ama->id}/payer-mois?date=2026-10-20");
+        $this->assertSame(1, AbonnementCantine::count());
+    }
+
+    public function test_payer_au_mois_exige_un_prix_du_mois(): void
+    {
+        $this->inscrire(300, [$this->ama]);
+
+        $this->actingAs($this->admin)->get('/cantine')->assertDontSee('Payé pour le mois');
+        $this->post("/cantine/eleves/{$this->ama->id}/payer-mois")->assertSessionHas('error');
+        $this->assertSame(0, AbonnementCantine::count());
+    }
+
+    public function test_annuler_un_paiement_du_mois(): void
+    {
+        $this->ama->update(['inscrit_cantine' => true]);
+        $this->admin->ecole->update(['prix_cantine' => 300, 'prix_cantine_mois' => 6000]);
+        $this->actingAs($this->admin)->post("/cantine/eleves/{$this->ama->id}/payer-mois");
+
+        $this->delete('/cantine/abonnements/'.AbonnementCantine::sole()->id)->assertRedirect('/cantine');
+
+        $this->assertSame(0, AbonnementCantine::count());
+        $this->assertSame(['Ama'], $this->get('/cantine')->viewData('nonPayes')->pluck('prenom')->all());
+    }
+
+    public function test_le_parent_voit_la_cantine_du_mois_et_l_ecole_peut_le_prevenir_sur_whatsapp(): void
+    {
+        $this->ama->update(['inscrit_cantine' => true]);
+        $this->admin->ecole->update(['prix_cantine' => 300, 'prix_cantine_mois' => 6000]);
+        $parent = User::factory()->parent()->create(['ecole_id' => $this->admin->ecole_id]);
+        $tuteur = Tuteur::create(['ecole_id' => $this->admin->ecole_id, 'user_id' => $parent->id, 'nom' => 'Mensah', 'prenom' => 'Afi', 'telephone' => '90112233']);
+        $this->ama->tuteurs()->attach($tuteur->id, ['lien_parente' => 'Mère']);
+
+        $this->actingAs($this->admin)->post("/cantine/eleves/{$this->ama->id}/payer");
+        $this->get('/cantine')->assertSee('https://wa.me/22890112233?text=', false);
+        $this->actingAs($parent)->get("/mes-enfants/{$this->ama->id}")->assertOk()->assertSee('1 jour(s) payé(s)');
+
+        $this->actingAs($this->admin)->post("/cantine/eleves/{$this->ama->id}/payer-mois");
+        $this->actingAs($parent)->get("/mes-enfants/{$this->ama->id}")->assertSee('Payée pour tout le mois');
+    }
+
+    public function test_une_autre_ecole_ne_peut_pas_payer_le_mois_d_un_eleve(): void
+    {
+        $adminB = User::factory()->admin()->create();
+        $adminB->ecole->update(['prix_cantine' => 200, 'prix_cantine_mois' => 4000]);
+
+        $this->actingAs($adminB)->post("/cantine/eleves/{$this->ama->id}/payer-mois")->assertNotFound();
+        $this->assertSame(0, AbonnementCantine::count());
     }
 
     private function inscrire(int $prix, array $eleves): void

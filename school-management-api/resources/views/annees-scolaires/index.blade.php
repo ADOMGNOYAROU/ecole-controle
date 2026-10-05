@@ -3,7 +3,10 @@
 @section('title', 'Années scolaires')
 
 @section('content')
-<h1 class="page-title mb-4">Années scolaires & trimestres</h1>
+<div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+    <h1 class="page-title">Années scolaires & trimestres</h1>
+    <a href="{{ route('passage-annee.show') }}" class="btn-secondary" title="Faire passer tous les élèves dans la classe supérieure pour la nouvelle année">Passage de fin d'année</a>
+</div>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <div class="card p-5">
