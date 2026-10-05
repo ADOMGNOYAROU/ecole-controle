@@ -4,9 +4,11 @@ use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\Cors;
 use App\Http\Middleware\EnsureEcoleActive;
 use App\Http\Middleware\EnsurePremium;
+use App\Http\Middleware\ModeSupport;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\RoleMiddleware;
 use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Application;
@@ -37,8 +39,13 @@ return Application::configure(basePath: dirname(__DIR__))
             ShareErrorsFromSession::class,
             ValidateCsrfToken::class,
             SubstituteBindings::class,
+            ModeSupport::class,
             EnsureEcoleActive::class,
         ]);
+
+        // Le mode support doit remplacer l'utilisateur avant l'authentification et la
+        // résolution des modèles de la route, pour que le cloisonnement par école s'applique
+        $middleware->prependToPriorityList(AuthenticatesRequests::class, ModeSupport::class);
 
         $middleware->alias([
             'auth' => Authenticate::class,

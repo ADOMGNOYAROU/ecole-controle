@@ -22,7 +22,7 @@ class JournalAuditeur
     private const MASQUES = ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'];
 
     /** Champs techniques sans intérêt pour l'audit. */
-    private const IGNORES = ['created_at', 'updated_at', 'remember_token', 'email_verified_at', 'dernier_rappel_le'];
+    private const IGNORES = ['created_at', 'updated_at', 'remember_token', 'email_verified_at', 'dernier_rappel_le', 'derniere_connexion_le'];
 
     public function enregistrer(
         string $action,

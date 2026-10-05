@@ -41,6 +41,7 @@ class AuthController extends Controller
         RateLimiter::clear($throttleKey);
 
         app(JournalAuditeur::class)->enregistrer('connexion', $user, ['canal' => 'application mobile'], user: $user);
+        $user->marquerConnexion();
 
         $token = $user->createToken('mobile')->plainTextToken;
 

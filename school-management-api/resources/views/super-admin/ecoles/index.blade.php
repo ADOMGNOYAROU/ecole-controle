@@ -33,7 +33,7 @@
 
 <div class="card overflow-hidden">
     <table class="data-table">
-        <thead><tr><th>École</th><th>Ville</th><th>Plan</th><th>Statut</th><th>Utilisateurs</th><th>Essai jusqu'au</th><th></th></tr></thead>
+        <thead><tr><th>École</th><th>Ville</th><th>Plan</th><th>Statut</th><th>Utilisateurs</th><th>Santé</th><th>Dernière connexion</th><th>Essai jusqu'au</th><th></th></tr></thead>
         <tbody>
             @forelse($ecoles as $ecole)
                 <tr>
@@ -49,24 +49,28 @@
                         <span class="badge-{{ match($ecole->statut) { 'actif' => 'green', 'suspendu' => 'red', 'expire' => 'yellow', default => 'slate' } }}">{{ $ecole->statut }}</span>
                     </td>
                     <td>{{ $ecole->users_count }}</td>
+                    <td><span class="badge-{{ match($sante[$ecole->id]['niveau'] ?? 'faible') { 'bonne' => 'green', 'moyenne' => 'yellow', default => 'red' } }}">{{ $sante[$ecole->id]['score'] ?? 0 }}/100</span></td>
+                    <td class="text-slate-500">{{ ($sante[$ecole->id]['derniere_connexion'] ?? null)?->format('d/m/Y') ?? 'jamais' }}</td>
                     <td>{{ $ecole->trial_ends_at?->format('d/m/Y') ?? '—' }}</td>
                     <td class="text-right space-x-1.5 whitespace-nowrap">
                         <x-action-link :href="route('super-admin.ecoles.show', $ecole)" type="view">Voir</x-action-link>
                         @if($ecole->statut === 'suspendu')
-                            <form method="PATCH" action="{{ route('super-admin.ecoles.activer', $ecole) }}" class="inline">
+                            <form method="POST" action="{{ route('super-admin.ecoles.activer', $ecole) }}" class="inline">
                                 @csrf
+                                @method('PATCH')
                                 <x-icon-button icon="check" variant="success">Activer</x-icon-button>
                             </form>
                         @else
-                            <form method="PATCH" action="{{ route('super-admin.ecoles.suspendre', $ecole) }}" class="inline" onsubmit="return confirm('Suspendre cette école ?');">
+                            <form method="POST" action="{{ route('super-admin.ecoles.suspendre', $ecole) }}" class="inline" onsubmit="return confirm('Suspendre cette école ?');">
                                 @csrf
+                                @method('PATCH')
                                 <x-icon-button icon="pause" variant="warning">Suspendre</x-icon-button>
                             </form>
                         @endif
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="7" class="text-center text-slate-400 py-6">Aucune école trouvée.</td></tr>
+                <tr><td colspan="9" class="text-center text-slate-400 py-6">Aucune école trouvée.</td></tr>
             @endforelse
         </tbody>
     </table>
