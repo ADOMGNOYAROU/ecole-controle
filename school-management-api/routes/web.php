@@ -19,6 +19,7 @@ use App\Http\Controllers\Web\MessagerieController;
 use App\Http\Controllers\Web\NoteController;
 use App\Http\Controllers\Web\NotificationController;
 use App\Http\Controllers\Web\PaiementController;
+use App\Http\Controllers\Web\PassageAnneeController;
 use App\Http\Controllers\Web\PayDunyaController;
 use App\Http\Controllers\Web\PresenceController;
 use App\Http\Controllers\Web\ProfileController;
@@ -166,6 +167,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('matieres', MatiereController::class)->except('show');
         Route::resource('tuteurs', TuteurController::class);
 
+        Route::get('/passage-annee', [PassageAnneeController::class, 'show'])->name('passage-annee.show');
+        Route::post('/passage-annee', [PassageAnneeController::class, 'executer'])->name('passage-annee.executer');
         Route::resource('annees-scolaires', AnneeScolaireController::class)->only(['index', 'store', 'update', 'destroy'])->parameters(['annees-scolaires' => 'anneeScolaire']);
         Route::resource('trimestres', TrimestreController::class)->only(['index', 'store', 'update', 'destroy']);
 
