@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Abonnement;
 use App\Models\Ecole;
 use App\Models\Facture;
+use App\Services\SuiviEcoles;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index(): View
+    public function index(SuiviEcoles $suivi): View
     {
+        $sante = $suivi->sante();
+
         $debutMois = now()->startOfMonth();
 
         $stats = [
@@ -23,7 +26,8 @@ class DashboardController extends Controller
         ];
 
         $abonnementsActifs = Abonnement::where('statut', 'actif')->where('date_fin', '>=', now())->count();
-        $mrrEstime = round(($abonnementsActifs * Ecole::TARIF_PREMIUM_2MOIS) / 3);
+        // Un abonnement couvre 2 mois : revenu mensuel = tarif / 2
+        $mrrEstime = round(($abonnementsActifs * Ecole::TARIF_PREMIUM_2MOIS) / 2);
 
         $revenuCeMois = Facture::where('statut', Facture::STATUT_PAYEE)
             ->where('payee_le', '>=', $debutMois)
@@ -52,6 +56,15 @@ class DashboardController extends Controller
             'montantEnAttente' => $montantEnAttente,
             'dernieresEcoles' => $dernieresEcoles,
             'facturesUrgentes' => $facturesUrgentes,
+            'sante' => $sante,
+            'essaisQuiFinissent' => $suivi->essaisQuiFinissent(),
+            'ecolesEndormies' => $suivi->ecolesEndormies($sante)->take(8),
+            'ecolesFragiles' => Ecole::whereIn('id', $sante->filter(fn ($s) => $s['niveau'] !== 'bonne')->keys())
+                ->where('statut', '!=', Ecole::STATUT_SUSPENDU)->get()
+                ->sortBy(fn (Ecole $e) => $sante[$e->id]['score'])->take(8),
+            'revenus' => $suivi->revenus12Mois(),
+            'conversion' => $suivi->conversion(),
+            'payDunya' => $suivi->payDunyaDuMois(),
         ]);
     }
 }

@@ -25,6 +25,12 @@ class JournalAudit extends Model
         'passage_annee' => 'Passage de fin d\'année',
         'consultation' => 'Consultation (super admin)',
         'export_journal' => 'Export du journal',
+        'prolongation_essai' => 'Essai prolongé',
+        'reinitialisation_acces' => 'Accès réinitialisé',
+        'note_interne' => 'Note interne',
+        'acces_support' => 'Entrée en mode support',
+        'page_support' => 'Page vue en mode support',
+        'fin_support' => 'Sortie du mode support',
     ];
 
     protected $table = 'journal_audit';
