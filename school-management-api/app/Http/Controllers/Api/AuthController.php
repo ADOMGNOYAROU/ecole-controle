@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\JournalAuditeur;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -32,10 +33,14 @@ class AuthController extends Controller
         if (! $user || ! Hash::check($request->password, $user->password)) {
             RateLimiter::hit($throttleKey);
 
+            app(JournalAuditeur::class)->enregistrer('connexion_echouee', $user, ['email_saisi' => $request->email, 'canal' => 'application mobile'], ecoleId: $user?->ecole_id, libelle: $request->email);
+
             throw ValidationException::withMessages(['email' => ['Identifiants invalides.']]);
         }
 
         RateLimiter::clear($throttleKey);
+
+        app(JournalAuditeur::class)->enregistrer('connexion', $user, ['canal' => 'application mobile'], user: $user);
 
         $token = $user->createToken('mobile')->plainTextToken;
 

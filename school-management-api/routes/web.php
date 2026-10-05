@@ -28,6 +28,7 @@ use App\Http\Controllers\Web\RecuController;
 use App\Http\Controllers\Web\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use App\Http\Controllers\Web\SuperAdmin\EcoleController as SuperAdminEcoleController;
 use App\Http\Controllers\Web\SuperAdmin\FactureController as SuperAdminFactureController;
+use App\Http\Controllers\Web\SuperAdmin\JournalController as SuperAdminJournalController;
 use App\Http\Controllers\Web\TrimestreController;
 use App\Http\Controllers\Web\TuteurController;
 use App\Http\Controllers\Web\UserAccountController;
@@ -194,5 +195,8 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/factures', [SuperAdminFactureController::class, 'index'])->name('factures.index');
         Route::post('/factures/{facture}/confirmer', [SuperAdminFactureController::class, 'confirmer'])->name('factures.confirmer');
+
+        Route::get('/journal', [SuperAdminJournalController::class, 'index'])->name('journal.index');
+        Route::get('/journal/export', [SuperAdminJournalController::class, 'export'])->name('journal.export');
     });
 });
