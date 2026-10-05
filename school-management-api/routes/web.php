@@ -131,6 +131,8 @@ Route::middleware('auth')->group(function () {
             Route::put('/cantine/parametres', [CantineController::class, 'enregistrerParametres'])->name('cantine.parametres.update');
             Route::post('/cantine/eleves/{eleve}/payer', [CantineController::class, 'payer'])->name('cantine.payer');
             Route::delete('/cantine/paiements/{paiementCantine}', [CantineController::class, 'annuler'])->name('cantine.annuler');
+            Route::post('/cantine/eleves/{eleve}/payer-mois', [CantineController::class, 'payerMois'])->name('cantine.payer-mois');
+            Route::delete('/cantine/abonnements/{abonnementCantine}', [CantineController::class, 'annulerMois'])->name('cantine.annuler-mois');
 
             Route::get('/comptes', [UserAccountController::class, 'index'])->name('comptes.index');
             Route::post('/comptes/generer', [UserAccountController::class, 'generer'])->name('comptes.generer');

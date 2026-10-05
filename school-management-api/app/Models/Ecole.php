@@ -35,12 +35,14 @@ class Ecole extends Model
         'statut',
         'plan',
         'prix_cantine',
+        'prix_cantine_mois',
         'trial_ends_at',
     ];
 
     protected $casts = [
         'trial_ends_at' => 'datetime',
         'prix_cantine' => 'decimal:2',
+        'prix_cantine_mois' => 'decimal:2',
     ];
 
     public function users(): HasMany

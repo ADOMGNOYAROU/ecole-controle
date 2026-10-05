@@ -86,6 +86,11 @@ class Eleve extends Model
         return $this->hasMany(PaiementCantine::class);
     }
 
+    public function abonnementsCantine(): HasMany
+    {
+        return $this->hasMany(AbonnementCantine::class);
+    }
+
     public function bulletins(): HasMany
     {
         return $this->hasMany(Bulletin::class);

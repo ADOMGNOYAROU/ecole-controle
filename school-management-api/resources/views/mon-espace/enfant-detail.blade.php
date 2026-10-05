@@ -52,6 +52,22 @@
     </div>
 </div>
 
+@if($eleve->inscrit_cantine || $abonnementCantine || $joursCantine->isNotEmpty())
+    <div class="card p-5 mt-6">
+        <h2 class="font-semibold text-slate-900 mb-3">Cantine · {{ $moisCantine->locale('fr')->translatedFormat('F Y') }}</h2>
+        @if($abonnementCantine)
+            <p><span class="badge-green">Payée pour tout le mois</span> <span class="text-sm text-slate-500 ml-2">{{ number_format($abonnementCantine->montant, 0, ',', ' ') }} F</span></p>
+        @elseif($joursCantine->isNotEmpty())
+            <p class="text-slate-700">
+                <strong>{{ $joursCantine->count() }} jour(s) payé(s)</strong> ce mois-ci, soit {{ number_format($joursCantine->sum('montant'), 0, ',', ' ') }} F.
+                <span class="text-sm text-slate-500">Dernier jour payé : {{ $joursCantine->first()->date->format('d/m/Y') }}.</span>
+            </p>
+        @else
+            <p class="text-slate-500">Aucun paiement de cantine enregistré ce mois-ci.</p>
+        @endif
+    </div>
+@endif
+
 <div class="card p-5 mt-6">
     <h2 class="font-semibold text-slate-900 mb-3">Paiements de scolarité</h2>
     <table class="data-table">
