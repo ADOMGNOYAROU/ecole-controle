@@ -25,6 +25,7 @@
                     <a href="{{ route('super-admin.dashboard') }}" class="nav-link {{ request()->routeIs('super-admin.dashboard') ? 'active' : '' }}"><x-nav-icon name="home" />Tableau de bord</a>
                     <a href="{{ route('super-admin.ecoles.index') }}" class="nav-link {{ request()->routeIs('super-admin.ecoles.*') ? 'active' : '' }}"><x-nav-icon name="building" />Écoles</a>
                     <a href="{{ route('super-admin.factures.index') }}" class="nav-link {{ request()->routeIs('super-admin.factures.*') ? 'active' : '' }}"><x-nav-icon name="receipt" />Factures</a>
+                    <a href="{{ route('super-admin.journal.index') }}" class="nav-link {{ request()->routeIs('super-admin.journal.*') ? 'active' : '' }}"><x-nav-icon name="key" />Journal d'audit</a>
                 @else
                     <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}"><x-nav-icon name="home" />Tableau de bord</a>
 

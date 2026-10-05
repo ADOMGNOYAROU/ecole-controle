@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Models\Concerns\BelongsToEcole;
 use App\Support\WhatsApp;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\URL;
 
 class Paiement extends Model
 {
-    use BelongsToEcole, HasFactory;
+    use Auditable, BelongsToEcole, HasFactory;
 
     protected $fillable = [
         'ecole_id',

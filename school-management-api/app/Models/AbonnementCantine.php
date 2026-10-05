@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Models\Concerns\BelongsToEcole;
 use App\Support\WhatsApp;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class AbonnementCantine extends Model
 {
-    use BelongsToEcole;
+    use Auditable, BelongsToEcole;
 
     protected $table = 'abonnements_cantine';
 

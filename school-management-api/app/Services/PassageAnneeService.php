@@ -103,6 +103,14 @@ class PassageAnneeService
                 }
             }
 
+            app(JournalAuditeur::class)->enregistrer('passage_annee', $cible, [
+                'depuis' => $source->libelle,
+                'vers' => $cible->libelle,
+                'passent' => $bilan['passes'],
+                'redoublent' => $bilan['redoublants'],
+                'quittent' => $bilan['sortants'],
+            ]);
+
             return $bilan;
         });
     }

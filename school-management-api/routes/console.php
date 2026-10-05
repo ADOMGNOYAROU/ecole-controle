@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('paiements:rappels')->dailyAt('08:00');
+Schedule::command('journal:purger')->monthlyOn(1, '03:00');
