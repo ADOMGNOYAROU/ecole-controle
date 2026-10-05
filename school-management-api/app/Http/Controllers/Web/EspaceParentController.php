@@ -25,8 +25,15 @@ class EspaceParentController extends Controller
         abort_unless($tuteur->eleves()->where('eleves.id', $eleve->id)->exists(), 403);
 
         $trimestre = Trimestre::actuel();
+        $mois = today()->startOfMonth();
 
         return view('mon-espace.enfant-detail', [
+            'moisCantine' => $mois,
+            'abonnementCantine' => $eleve->abonnementsCantine()->whereDate('mois', $mois)->first(),
+            'joursCantine' => $eleve->paiementsCantine()
+                ->whereBetween('date', [$mois->toDateString(), $mois->copy()->endOfMonth()->toDateString()])
+                ->orderByDesc('date')
+                ->get(),
             'eleve' => $eleve,
             'trimestre' => $trimestre,
             'donnees' => $trimestre ? $eleve->bulletinDonnees($trimestre->id) : null,

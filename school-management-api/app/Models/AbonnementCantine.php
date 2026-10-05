@@ -8,25 +8,25 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Paiement de la cantine d'un élève pour une journée. Le montant est figé au moment
- * de l'encaissement : changer le prix de la cantine ne modifie pas l'historique.
+ * Cantine payée pour tout un mois : l'élève sort de la liste de chaque jour de ce mois.
+ * « mois » est toujours le premier jour du mois. Le montant est figé à l'encaissement.
  */
-class PaiementCantine extends Model
+class AbonnementCantine extends Model
 {
     use BelongsToEcole;
 
-    protected $table = 'paiements_cantine';
+    protected $table = 'abonnements_cantine';
 
     protected $fillable = [
         'ecole_id',
         'eleve_id',
-        'date',
+        'mois',
         'montant',
         'enregistre_par_id',
     ];
 
     protected $casts = [
-        'date' => 'date',
+        'mois' => 'date',
         'montant' => 'decimal:2',
     ];
 
@@ -35,17 +35,17 @@ class PaiementCantine extends Model
         return $this->belongsTo(Eleve::class);
     }
 
+    public function libelleMois(): string
+    {
+        return ucfirst($this->mois->locale('fr')->translatedFormat('F Y'));
+    }
+
     public function lienWhatsApp(Tuteur $tuteur): string
     {
         $message = "Bonjour {$tuteur->prenom} {$tuteur->nom}, {$this->ecole->nom} confirme le paiement de la cantine de "
-            ."{$this->eleve->nomComplet()} pour le {$this->date->format('d/m/Y')} : "
+            ."{$this->eleve->nomComplet()} pour tout le mois de {$this->mois->locale('fr')->translatedFormat('F Y')} : "
             .number_format((float) $this->montant, 0, ',', ' ').' F. Merci !';
 
         return WhatsApp::lien($tuteur->telephone, $message);
-    }
-
-    public function enregistrePar(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'enregistre_par_id');
     }
 }

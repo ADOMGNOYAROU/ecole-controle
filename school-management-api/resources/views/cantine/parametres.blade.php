@@ -17,7 +17,10 @@
         <label class="form-label" for="prix_cantine">Prix d'un jour de cantine (FCFA)</label>
         <input type="number" id="prix_cantine" name="prix_cantine" min="0" step="1" value="{{ old('prix_cantine', $prix !== null ? (int) $prix : null) }}" class="form-input" required>
         @error('prix_cantine')<p class="form-error">{{ $message }}</p>@enderror
-        <p class="text-xs text-slate-500 mt-2">Un changement de prix ne modifie pas les paiements déjà enregistrés.</p>
+        <label class="form-label mt-4" for="prix_cantine_mois">Prix d'un mois de cantine (FCFA, facultatif)</label>
+        <input type="number" id="prix_cantine_mois" name="prix_cantine_mois" min="0" step="1" value="{{ old('prix_cantine_mois', $prixMois !== null ? (int) $prixMois : null) }}" class="form-input" placeholder="Ex. 6000">
+        @error('prix_cantine_mois')<p class="form-error">{{ $message }}</p>@enderror
+        <p class="text-xs text-slate-500 mt-2">Laissez le prix du mois vide si les parents paient uniquement au jour. Un changement de prix ne modifie pas les paiements déjà enregistrés.</p>
     </div>
 
     <div class="space-y-4">

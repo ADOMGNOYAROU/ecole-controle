@@ -30,7 +30,11 @@ class PaiementController extends Controller
             'en_retard' => Paiement::where('statut', '!=', Paiement::STATUT_PAYE)->where('date_echeance', '<', now())->count(),
         ];
 
-        return view('paiements.index', compact('paiements', 'stats'));
+        $recuPaiement = session('recu_paiement_id')
+            ? Paiement::with(['eleve.classe', 'eleve.tuteurs'])->find(session('recu_paiement_id'))
+            : null;
+
+        return view('paiements.index', compact('paiements', 'stats', 'recuPaiement'));
     }
 
     public function rapport(Request $request, RapportPdfService $rapportPdf): Response
@@ -59,7 +63,7 @@ class PaiementController extends Controller
 
     private function filtrer(Request $request)
     {
-        return Paiement::with('eleve')
+        return Paiement::with(['eleve.classe', 'eleve.tuteurs'])
             ->when($request->filled('statut'), fn ($q) => $q->where('statut', $request->statut))
             ->when($request->filled('eleve_id'), fn ($q) => $q->where('eleve_id', $request->eleve_id));
     }
@@ -81,9 +85,11 @@ class PaiementController extends Controller
         $donnees = $request->validated();
         $donnees['statut'] = $this->calculerStatut($donnees);
 
-        Paiement::create($donnees);
+        $paiement = Paiement::create($donnees);
 
-        return redirect()->route('paiements.index')->with('success', 'Paiement enregistré.');
+        return redirect()->route('paiements.index')
+            ->with('success', 'Paiement enregistré.')
+            ->with('recu_paiement_id', $paiement->id);
     }
 
     public function edit(Paiement $paiement): View
@@ -106,7 +112,9 @@ class PaiementController extends Controller
 
         $paiement->update($donnees);
 
-        return redirect()->route('paiements.index')->with('success', 'Paiement mis à jour.');
+        return redirect()->route('paiements.index')
+            ->with('success', 'Paiement mis à jour.')
+            ->with('recu_paiement_id', $paiement->id);
     }
 
     public function destroy(Paiement $paiement): RedirectResponse
