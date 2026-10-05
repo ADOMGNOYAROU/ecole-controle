@@ -9,7 +9,7 @@
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
     <div class="card p-5">
         <p class="text-sm text-slate-500">Moyenne {{ $trimestre?->nom ?? '' }}</p>
-        <p class="text-2xl font-semibold">{{ $donnees['moyenne_generale'] ?? '—' }}{{ $donnees['moyenne_generale'] !== null ? '/20' : '' }}</p>
+        <p class="text-2xl font-semibold">{{ $donnees['moyenne_generale'] ?? '—' }}{{ ($donnees['moyenne_generale'] ?? null) !== null ? '/20' : '' }}</p>
     </div>
     <div class="card p-5">
         <p class="text-sm text-slate-500">Taux de présence</p>
@@ -40,7 +40,7 @@
     <div class="card p-5">
         <h2 class="font-semibold text-slate-900 mb-3">Présences récentes</h2>
         <table class="data-table">
-            <thead><tr><th>Date</th><th>Statut</th></tr></thead>
+            <thead><tr><th>Date</th><th>Statut</th><th></th></tr></thead>
             <tbody>
                 @forelse($presences as $presence)
                     <tr><td>{{ $presence->date->format('d/m/Y') }}</td><td><span class="badge-{{ match($presence->statut) { 'present' => 'green', 'retard' => 'yellow', default => 'red' } }}">{{ $presence->statut }}</span></td></tr>
@@ -63,9 +63,10 @@
                     <td>{{ number_format($paiement->montant, 0, ',', ' ') }} F</td>
                     <td>{{ number_format($paiement->montant_paye, 0, ',', ' ') }} F</td>
                     <td><span class="badge-{{ match($paiement->statut) { 'paye' => 'green', 'partiel' => 'yellow', 'retard' => 'red', default => 'slate' } }}">{{ $paiement->statut }}</span></td>
+                    <td class="text-right">@if((float) $paiement->montant_paye > 0)<a href="{{ route('paiements.recu', $paiement) }}" target="_blank" rel="noopener" class="text-sm font-medium text-brand-700 hover:underline">Reçu PDF</a>@endif</td>
                 </tr>
             @empty
-                <tr><td colspan="4" class="text-center text-slate-400 py-6">Aucun paiement.</td></tr>
+                <tr><td colspan="5" class="text-center text-slate-400 py-6">Aucun paiement.</td></tr>
             @endforelse
         </tbody>
     </table>

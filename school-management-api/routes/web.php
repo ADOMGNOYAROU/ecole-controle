@@ -23,6 +23,7 @@ use App\Http\Controllers\Web\PayDunyaController;
 use App\Http\Controllers\Web\PresenceController;
 use App\Http\Controllers\Web\ProfileController;
 use App\Http\Controllers\Web\ProgressionController;
+use App\Http\Controllers\Web\RecuController;
 use App\Http\Controllers\Web\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use App\Http\Controllers\Web\SuperAdmin\EcoleController as SuperAdminEcoleController;
 use App\Http\Controllers\Web\SuperAdmin\FactureController as SuperAdminFactureController;
@@ -41,6 +42,9 @@ Route::middleware('guest')->group(function () {
 
 // Webhook PayDunya (public - appelé par PayDunya sans authentification)
 Route::post('/paydunya/webhook', [PayDunyaController::class, 'webhook'])->name('paydunya.webhook');
+
+// Reçu de paiement ouvert depuis le lien signé envoyé sur WhatsApp (sans compte)
+Route::get('/recus/{paiement}', [RecuController::class, 'public'])->middleware('signed')->name('recus.public');
 
 Route::middleware('auth')->group(function () {
     Route::match(['get', 'post'], '/logout', [LoginController::class, 'logout'])->name('logout');
@@ -93,6 +97,9 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [EspaceParentController::class, 'enfants'])->name('index');
             Route::get('/{eleve}', [EspaceParentController::class, 'enfant'])->name('show');
         });
+
+        // Reçu de paiement : école, parent de l'élève ou élève (contrôle d'accès dans le contrôleur)
+        Route::get('/paiements/{paiement}/recu', [RecuController::class, 'telecharger'])->name('paiements.recu');
 
         Route::get('/bulletins', [BulletinController::class, 'index'])->name('bulletins.index')->middleware('role:admin,enseignant');
         Route::post('/bulletins/classes/{classe}/trimestres/{trimestre}', [BulletinController::class, 'genererClasse'])->name('bulletins.generer')->middleware('role:admin,enseignant');
