@@ -28,6 +28,10 @@ class AppServiceProvider extends ServiceProvider
         // Journal d'audit : connexions réussies, échouées et déconnexions
         Event::listen(Login::class, function (Login $event) {
             app(JournalAuditeur::class)->enregistrer('connexion', $event->user, user: $event->user);
+
+            if ($event->user instanceof User) {
+                $event->user->marquerConnexion();
+            }
         });
 
         Event::listen(Failed::class, function (Failed $event) {

@@ -61,6 +61,17 @@ class Ecole extends Model
         return $this->hasMany(Facture::class);
     }
 
+    public function notesInternes(): HasMany
+    {
+        return $this->hasMany(NoteInterne::class);
+    }
+
+    /** Le premier compte administrateur créé pour l'école (celui de l'inscription). */
+    public function directeur(): ?User
+    {
+        return $this->users()->where('role', User::ROLE_ADMIN)->oldest('id')->first();
+    }
+
     public function estEnEssai(): bool
     {
         return $this->statut === self::STATUT_ESSAI

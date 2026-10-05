@@ -130,6 +130,19 @@
             </header>
 
             <main class="flex-1 overflow-y-auto p-4 lg:p-8 bg-[radial-gradient(circle_at_top_right,theme(colors.brand.50),transparent_45%)]">
+                @if($accesSupport = session('acces_support'))
+                    <div class="mb-4 rounded-lg bg-orange-100 border border-orange-300 px-4 py-3 text-sm text-orange-900 flex flex-wrap items-center justify-between gap-3">
+                        <span>
+                            <strong>Mode support — {{ $accesSupport['ecole_nom'] }}</strong> · vous voyez l'école comme {{ $user->name }}, en lecture seule.
+                            Fin dans {{ app(\App\Services\AccesSupport::class)->minutesRestantes() }} min. Chaque page est notée dans le journal d'audit.
+                        </span>
+                        <form method="POST" action="{{ route('support.quitter') }}">
+                            @csrf
+                            <button type="submit" class="rounded-md bg-orange-600 px-3 py-1.5 font-medium text-white hover:bg-orange-700">Quitter le mode support</button>
+                        </form>
+                    </div>
+                @endif
+
                 @if(! $user->isSuperAdmin() && $user->ecole?->estEnEssai() && ! request()->routeIs('abonnement.*'))
                     <div class="mb-4 rounded-lg bg-brand-50 border border-brand-200 px-4 py-3 text-sm text-brand-800 flex items-center justify-between">
                         <span>Essai Premium : {{ $user->ecole->joursEssaiRestants() }} jour(s) restant(s).</span>

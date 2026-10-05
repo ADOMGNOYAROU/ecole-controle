@@ -29,6 +29,7 @@ use App\Http\Controllers\Web\SuperAdmin\DashboardController as SuperAdminDashboa
 use App\Http\Controllers\Web\SuperAdmin\EcoleController as SuperAdminEcoleController;
 use App\Http\Controllers\Web\SuperAdmin\FactureController as SuperAdminFactureController;
 use App\Http\Controllers\Web\SuperAdmin\JournalController as SuperAdminJournalController;
+use App\Http\Controllers\Web\SupportController;
 use App\Http\Controllers\Web\TrimestreController;
 use App\Http\Controllers\Web\TuteurController;
 use App\Http\Controllers\Web\UserAccountController;
@@ -53,6 +54,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/', fn () => redirect()->route('dashboard'));
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/support/quitter', [SupportController::class, 'quitter'])->name('support.quitter');
 
     // Profil personnel (toutes les sessions authentifiées)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
@@ -192,6 +194,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/ecoles/{ecole}', [SuperAdminEcoleController::class, 'show'])->name('ecoles.show');
         Route::patch('/ecoles/{ecole}/suspendre', [SuperAdminEcoleController::class, 'suspendre'])->name('ecoles.suspendre');
         Route::patch('/ecoles/{ecole}/activer', [SuperAdminEcoleController::class, 'activer'])->name('ecoles.activer');
+        Route::post('/ecoles/{ecole}/prolonger-essai', [SuperAdminEcoleController::class, 'prolongerEssai'])->name('ecoles.prolonger-essai');
+        Route::post('/ecoles/{ecole}/utilisateurs/{utilisateur}/reinitialiser', [SuperAdminEcoleController::class, 'reinitialiserAcces'])->name('ecoles.reinitialiser-acces');
+        Route::post('/ecoles/{ecole}/notes', [SuperAdminEcoleController::class, 'ajouterNote'])->name('ecoles.notes.store');
+        Route::delete('/ecoles/{ecole}/notes/{note}', [SuperAdminEcoleController::class, 'supprimerNote'])->name('ecoles.notes.destroy');
+        Route::post('/ecoles/{ecole}/support', [SuperAdminEcoleController::class, 'demarrerSupport'])->name('ecoles.support');
 
         Route::get('/factures', [SuperAdminFactureController::class, 'index'])->name('factures.index');
         Route::post('/factures/{facture}/confirmer', [SuperAdminFactureController::class, 'confirmer'])->name('factures.confirmer');

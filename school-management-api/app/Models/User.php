@@ -51,6 +51,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'must_change_password' => 'boolean',
+        'derniere_connexion_le' => 'datetime',
     ];
 
     public function enseignant(): HasOne
@@ -76,6 +77,12 @@ class User extends Authenticatable
     public function ecole(): BelongsTo
     {
         return $this->belongsTo(Ecole::class);
+    }
+
+    /** Date de dernière connexion, enregistrée sans passer par le journal d'audit. */
+    public function marquerConnexion(): void
+    {
+        $this->forceFill(['derniere_connexion_le' => now()])->saveQuietly();
     }
 
     public function isSuperAdmin(): bool
