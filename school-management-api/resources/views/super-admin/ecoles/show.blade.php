@@ -67,4 +67,10 @@
         </table>
     </div>
 </div>
+
+<div class="flex items-center justify-between mt-6 mb-3">
+    <h2 class="font-semibold text-slate-900">Activité récente</h2>
+    <a href="{{ route('super-admin.journal.index', ['ecole_id' => $ecole->id]) }}" class="text-sm text-indigo-600 hover:underline">Tout le journal de cette école</a>
+</div>
+@include('super-admin.journal._tableau', ['entrees' => $activite, 'avecEcole' => false])
 @endsection

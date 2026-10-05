@@ -7,6 +7,8 @@ use App\Models\Classe;
 use App\Models\Ecole;
 use App\Models\Eleve;
 use App\Models\Enseignant;
+use App\Models\JournalAudit;
+use App\Services\JournalAuditeur;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -32,6 +34,8 @@ class EcoleController extends Controller
 
     public function show(Ecole $ecole): View
     {
+        app(JournalAuditeur::class)->enregistrer('consultation', $ecole);
+
         $ecole->load(['abonnements' => fn ($q) => $q->orderByDesc('date_fin'), 'factures' => fn ($q) => $q->orderByDesc('created_at')]);
 
         $stats = [
@@ -45,6 +49,7 @@ class EcoleController extends Controller
             'ecole' => $ecole,
             'stats' => $stats,
             'abonnementActif' => $ecole->abonnementActif(),
+            'activite' => JournalAudit::where('ecole_id', $ecole->id)->latest('id')->limit(20)->get(),
         ]);
     }
 

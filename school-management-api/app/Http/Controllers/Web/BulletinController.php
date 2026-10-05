@@ -7,6 +7,7 @@ use App\Models\Bulletin;
 use App\Models\Classe;
 use App\Models\Eleve;
 use App\Models\Trimestre;
+use App\Services\JournalAuditeur;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -65,6 +66,11 @@ class BulletinController extends Controller
         foreach ($elevesAvecMoyenne as $rang => $entry) {
             $this->genererBulletin($entry['eleve'], $trimestre, $rang + 1);
         }
+
+        app(JournalAuditeur::class)->enregistrer('generation_bulletins', $classe, [
+            'trimestre' => $trimestre->nom,
+            'eleves' => $elevesAvecMoyenne->count(),
+        ]);
 
         return back()->with('success', "Bulletins générés pour {$elevesAvecMoyenne->count()} élève(s) de {$classe->nom}.");
     }

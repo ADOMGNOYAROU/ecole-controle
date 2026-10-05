@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Models\Concerns\BelongsToEcole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Trimestre extends Model
 {
-    use BelongsToEcole, HasFactory;
+    use Auditable, BelongsToEcole, HasFactory;
 
     protected $fillable = [
         'ecole_id',
