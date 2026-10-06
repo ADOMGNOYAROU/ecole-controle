@@ -31,6 +31,12 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // Smart Engage : collecte des emails des directeurs pour les campagnes (clé générée dans Smart Engage > Sites)
+    'smart_engage' => [
+        'url' => env('SMART_ENGAGE_URL'),
+        'cle' => env('SMART_ENGAGE_CLE'),
+    ],
+
     'paydunya' => [
         'master_key' => env('PAYDUNYA_MASTER_KEY'),
         'public_key' => env('PAYDUNYA_PUBLIC_KEY'),

@@ -8,6 +8,7 @@ use App\Models\AnneeScolaire;
 use App\Models\Ecole;
 use App\Models\Trimestre;
 use App\Models\User;
+use App\Services\SmartEngage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -66,6 +67,10 @@ class InscriptionController extends Controller
 
             return $ecole;
         });
+
+        // Le directeur rejoint la liste des campagnes email, après la réponse pour ne pas ralentir l'inscription
+        $emailDirecteur = $donnees['admin_email'];
+        dispatch(fn () => app(SmartEngage::class)->ajouterContact($emailDirecteur))->afterResponse();
 
         return redirect()->route('dashboard')
             ->with('success', "Bienvenue {$ecole->nom} ! Vous bénéficiez de 30 jours d'essai Premium gratuit.");

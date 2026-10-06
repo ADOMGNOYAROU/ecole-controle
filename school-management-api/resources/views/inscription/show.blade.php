@@ -51,6 +51,7 @@
         <input id="admin_password_confirmation" name="admin_password_confirmation" type="password" required class="form-input">
     </div>
 
+    <p class="text-xs text-slate-500">En créant votre école, vous acceptez de recevoir par email les nouveautés d'École Manager. Vous pourrez vous désabonner en un clic depuis chaque email.</p>
     <button type="submit" class="btn-primary w-full">Créer mon école</button>
 </form>
 
