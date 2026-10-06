@@ -72,6 +72,11 @@ services:
         sync: false
       - key: PAYDUNYA_MODE
         value: test
+      # Smart Engage : la clé se génère dans Smart Engage > Sites > École Manager
+      - key: SMART_ENGAGE_URL
+        value: https://smart-engage.onrender.com
+      - key: SMART_ENGAGE_CLE
+        sync: false
       - key: PAYDUNYA_MASTER_KEY
         sync: false
       - key: PAYDUNYA_PUBLIC_KEY
