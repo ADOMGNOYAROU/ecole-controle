@@ -104,7 +104,10 @@ class Eleve extends Model
 
     public function moyenneTrimestre(int $trimestreId): ?float
     {
-        $notes = $this->notes()->where('trimestre_id', $trimestreId)->get();
+        // Notes déjà chargées (with('notes')) : aucune requête de plus, utile pour une liste d'élèves
+        $notes = $this->relationLoaded('notes')
+            ? $this->notes->where('trimestre_id', $trimestreId)
+            : $this->notes()->where('trimestre_id', $trimestreId)->get();
 
         if ($notes->isEmpty()) {
             return null;

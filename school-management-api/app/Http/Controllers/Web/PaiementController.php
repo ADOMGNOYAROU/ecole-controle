@@ -31,7 +31,7 @@ class PaiementController extends Controller
         ];
 
         $recuPaiement = session('recu_paiement_id')
-            ? Paiement::with(['eleve.classe', 'eleve.tuteurs'])->find(session('recu_paiement_id'))
+            ? Paiement::with(['eleve.classe', 'eleve.tuteurs', 'ecole'])->find(session('recu_paiement_id'))
             : null;
 
         return view('paiements.index', compact('paiements', 'stats', 'recuPaiement'));
@@ -63,7 +63,7 @@ class PaiementController extends Controller
 
     private function filtrer(Request $request)
     {
-        return Paiement::with(['eleve.classe', 'eleve.tuteurs'])
+        return Paiement::with(['eleve.classe', 'eleve.tuteurs', 'ecole'])
             ->when($request->filled('statut'), fn ($q) => $q->where('statut', $request->statut))
             ->when($request->filled('eleve_id'), fn ($q) => $q->where('eleve_id', $request->eleve_id));
     }
