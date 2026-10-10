@@ -180,6 +180,8 @@ class ProgressionService
             fn ($q) => $q->where('trimestre_id', $trimestre->id)
         )
             ->whereNotIn('id', $elevesAvecBulletinIds)
+            // Les notes du trimestre de tous les élèves en une seule requête, et non une par élève
+            ->with(['notes' => fn ($q) => $q->where('trimestre_id', $trimestre->id)])
             ->get()
             ->filter(function (Eleve $eleve) use ($trimestre) {
                 $moyenne = $eleve->moyenneTrimestre($trimestre->id);
